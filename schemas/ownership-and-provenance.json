@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equineprodata.io/schemas/ownership-and-provenance.json",
+  "title": "EquineProData — Ownership, Provenance, Syndication & Breeding Rights",
+  "description": "Legal ownership, co-ownership, syndication structures, liens, breeding rights, sale history, and full provenance chain. This is the RWA heart of EquinePro — horses are high-value assets with complex multi-party ownership that no existing system handles well.",
+  "type": "object",
+  "required": ["horseDID", "currentOwnership", "provenanceChain"],
+  "properties": {
+
+    "horseDID": { "type": "string", "privacyClass": "public" },
+
+    "currentOwnership": {
+      "type": "object",
+      "required": ["primaryOwner", "ownershipType", "effectiveDate"],
+      "properties": {
+        "primaryOwner": {
+          "type": "object",
+          "properties": {
+            "ownerDID": { "type": "string", "privacyClass": "shielded" },
+            "legalName": { "type": "string", "privacyClass": "restricted" },
+            "entityType": { "type": "string", "enum": ["individual", "partnership", "llc", "corporation", "trust", "syndicate", "farm", "ranch", "breeding_operation"], "privacyClass": "shielded" },
+            "contactPhone": { "type": "string", "privacyClass": "shielded" },
+            "contactEmail": { "type": "string", "privacyClass": "shielded" },
+            "state": { "type": "string", "privacyClass": "shielded" },
+            "country": { "type": "string", "privacyClass": "public" }
+          },
+          "privacyClass": "shielded"
+        },
+        "coOwners": {
+          "type": "array",
+          "description": "Co-owners with percentage shares. Common in racing, breeding, and syndication.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ownerDID": { "type": "string", "privacyClass": "shielded" },
+              "legalName": { "type": "string", "privacyClass": "restricted" },
+              "ownershipPercentage": { "type": "number", "privacyClass": "restricted" },
+              "role": { "type": "string", "enum": ["co_owner", "syndicate_member", "breeding_partner", "investor", "lessee", "trainer_interest"], "privacyClass": "shielded" },
+              "votingRights": { "type": "boolean", "description": "Whether this co-owner has decision-making authority.", "privacyClass": "restricted" }
+            }
+          },
+          "privacyClass": "shielded"
+        },
+        "ownershipType": {
+          "type": "string",
+          "enum": ["sole_owner", "co_ownership", "syndicate", "partnership", "leased", "leased_with_option", "consignment", "estate", "trust", "rescue_custody", "breeding_lease"],
+          "privacyClass": "shielded"
+        },
+        "effectiveDate": { "type": "string", "format": "date", "privacyClass": "shielded" }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "syndication": {
+      "type": "object",
+      "description": "Syndication structure for shared ownership of high-value horses. Common in racing stallions and top sport horses.",
+      "properties": {
+        "isSyndicated": { "type": "boolean", "privacyClass": "shielded" },
+        "syndicateName": { "type": "string", "privacyClass": "shielded" },
+        "totalShares": { "type": "integer", "description": "Total number of ownership shares.", "privacyClass": "restricted" },
+        "pricePerShare": { "type": "number", "privacyClass": "restricted" },
+        "managingPartnerDID": { "type": "string", "privacyClass": "shielded" },
+        "shareholders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "shareholderDID": { "type": "string", "privacyClass": "restricted" },
+              "sharesOwned": { "type": "integer", "privacyClass": "restricted" },
+              "acquisitionDate": { "type": "string", "format": "date", "privacyClass": "restricted" },
+              "acquisitionPrice": { "type": "number", "privacyClass": "restricted" }
+            }
+          },
+          "privacyClass": "restricted"
+        },
+        "syndicateAgreementHash": { "type": "string", "description": "Hash of the syndication agreement.", "privacyClass": "public" }
+      },
+      "privacyClass": "restricted"
+    },
+
+    "liens": {
+      "type": "array",
+      "description": "Financial liens, security interests, and encumbrances on this horse. Critical for sale transactions.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "lienHolderDID": { "type": "string", "privacyClass": "restricted" },
+          "lienHolderName": { "type": "string", "privacyClass": "restricted" },
+          "lienType": { "type": "string", "enum": ["purchase_money", "training_lien", "board_lien", "vet_lien", "farrier_lien", "feed_lien", "agister_lien", "judgment_lien", "tax_lien"], "privacyClass": "restricted" },
+          "amountOwed": { "type": "number", "privacyClass": "restricted" },
+          "filedDate": { "type": "string", "format": "date", "privacyClass": "restricted" },
+          "jurisdiction": { "type": "string", "privacyClass": "restricted" },
+          "status": { "type": "string", "enum": ["active", "satisfied", "disputed", "foreclosed"], "privacyClass": "restricted" },
+          "documentHash": { "type": "string", "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "restricted"
+    },
+
+    "breedingRights": {
+      "type": "object",
+      "description": "Breeding rights and restrictions. Can be separate from ownership.",
+      "properties": {
+        "breedingRightsHolder": { "type": "string", "description": "DID of entity holding breeding rights (may differ from owner).", "privacyClass": "restricted" },
+        "breedingRestrictions": {
+          "type": "array",
+          "description": "Contractual restrictions on breeding.",
+          "items": { "type": "string", "examples": ["Must not breed before age 4", "Offspring must be registered with AQHA", "Breeder retains first right of refusal on offspring", "No live cover — AI only"] },
+          "privacyClass": "restricted"
+        },
+        "stallionServiceContract": {
+          "type": "object",
+          "description": "For stallions: standing stud terms.",
+          "properties": {
+            "studFee": { "type": "number", "privacyClass": "restricted" },
+            "liveForalGuarantee": { "type": "boolean", "description": "Live foal guarantee policy.", "privacyClass": "shielded" },
+            "bookLimit": { "type": "integer", "description": "Max mares per season.", "privacyClass": "shielded" },
+            "breedingMethod": { "type": "array", "items": { "type": "string", "enum": ["live_cover", "fresh_cooled_AI", "frozen_AI", "embryo_transfer"] }, "privacyClass": "shielded" },
+            "standingAt": { "type": "string", "description": "Farm/facility where stallion stands.", "privacyClass": "shielded" }
+          },
+          "privacyClass": "restricted"
+        },
+        "embryoRights": {
+          "type": "object",
+          "description": "Embryo transfer rights and restrictions.",
+          "properties": {
+            "embryoTransferAllowed": { "type": "boolean", "privacyClass": "shielded" },
+            "maxEmbryosPerYear": { "type": "integer", "privacyClass": "restricted" },
+            "embryoOwnerDID": { "type": "string", "privacyClass": "restricted" }
+          },
+          "privacyClass": "restricted"
+        }
+      },
+      "privacyClass": "restricted"
+    },
+
+    "currentLocation": {
+      "type": "object",
+      "description": "Where the horse is currently stabled. Important for emergencies, transport, and service.",
+      "properties": {
+        "facilityDID": { "type": "string", "privacyClass": "shielded" },
+        "facilityName": { "type": "string", "privacyClass": "shielded" },
+        "facilityType": { "type": "string", "enum": ["private_farm", "boarding_stable", "training_facility", "breeding_farm", "racing_barn", "show_barn", "rehab_facility", "veterinary_hospital", "auction", "in_transit"], "privacyClass": "shielded" },
+        "state": { "type": "string", "privacyClass": "shielded" },
+        "country": { "type": "string", "privacyClass": "public" },
+        "trainerDID": { "type": "string", "privacyClass": "shielded" },
+        "trainerName": { "type": "string", "privacyClass": "shielded" },
+        "barnManagerDID": { "type": "string", "privacyClass": "shielded" },
+        "since": { "type": "string", "format": "date", "privacyClass": "shielded" }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "emergencyContacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "contactDID": { "type": "string", "privacyClass": "emergency" },
+          "name": { "type": "string", "privacyClass": "emergency" },
+          "phone": { "type": "string", "privacyClass": "emergency" },
+          "relationship": { "type": "string", "examples": ["owner", "barn_manager", "trainer", "spouse", "farm_manager"], "privacyClass": "emergency" },
+          "authorizationLevel": { "type": "string", "enum": ["emergency_medical_only", "full_medical_decisions", "financial_up_to_limit", "all_decisions"], "privacyClass": "emergency" },
+          "financialLimit": { "type": "number", "description": "Max dollar authorization for emergency treatment.", "privacyClass": "emergency" },
+          "priority": { "type": "integer", "privacyClass": "emergency" }
+        }
+      },
+      "privacyClass": "emergency"
+    },
+
+    "provenanceChain": {
+      "type": "array",
+      "description": "Complete chronological ownership, custody, and location history. The horse's full provenance audit trail.",
+      "items": {
+        "type": "object",
+        "required": ["eventType", "effectiveDate"],
+        "properties": {
+          "eventType": {
+            "type": "string",
+            "enum": ["foaled", "registered", "sold_private", "sold_auction", "sold_claiming", "claimed", "leased", "lease_returned", "gifted", "inherited", "donated_rescue", "surrendered", "syndication_created", "syndication_share_transferred", "breeding_lease_start", "breeding_lease_end", "training_start", "training_end", "boarding_start", "boarding_end", "export", "import", "retired", "deceased"],
+            "privacyClass": "shielded"
+          },
+          "effectiveDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "fromEntityDID": { "type": "string", "privacyClass": "shielded" },
+          "toEntityDID": { "type": "string", "privacyClass": "shielded" },
+          "salePrice": { "type": "number", "description": "Transaction price if a sale.", "privacyClass": "restricted" },
+          "auctionHouse": { "type": "string", "examples": ["Keeneland", "Fasig-Tipton", "OBS", "Heritage Place"], "privacyClass": "shielded" },
+          "contractHash": { "type": "string", "privacyClass": "public" },
+          "transactionHash": { "type": "string", "description": "On-chain anchor.", "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "legalDocuments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "documentType": { "type": "string", "enum": ["bill_of_sale", "lease_agreement", "breeding_contract", "syndication_agreement", "boarding_contract", "training_agreement", "insurance_policy", "lien_filing", "export_permit", "import_permit", "pre_purchase_exam_report", "mortality_report", "will_provision", "trust_document"], "privacyClass": "shielded" },
+          "documentHash": { "type": "string", "privacyClass": "public" },
+          "documentUri": { "type": "string", "privacyClass": "restricted" },
+          "issuedDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "parties": { "type": "array", "items": { "type": "string" }, "privacyClass": "restricted" }
+        }
+      },
+      "privacyClass": "restricted"
+    }
+  }
+}

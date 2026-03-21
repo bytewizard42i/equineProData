@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equineprodata.io/schemas/horse-identity.json",
+  "title": "EquineProData — Horse Identity (Signalment, Registration & Pedigree)",
+  "description": "Core identity record for a horse. The horse — not the owner, barn, or trainer — is the center of the record. Uses standard equine veterinary and registry terminology.",
+  "type": "object",
+  "required": ["horseDID", "signalment", "registration", "createdAt"],
+  "properties": {
+
+    "horseDID": {
+      "type": "string",
+      "description": "Persistent decentralized identifier for this horse. Survives ownership transfers, boarding, training, sale, breeding contracts, and referrals.",
+      "pattern": "^did:midnight:equine:[a-zA-Z0-9]+$",
+      "privacyClass": "public"
+    },
+
+    "signalment": {
+      "type": "object",
+      "description": "Standard equine signalment — the physical 'who' of the horse.",
+      "required": ["breed", "sex", "dateOfBirth", "color"],
+      "properties": {
+        "breed": { "type": "string", "examples": ["Thoroughbred", "Quarter Horse", "Warmblood", "Arabian", "Paint", "Appaloosa", "Draft Cross", "Friesian", "Mustang"], "privacyClass": "public" },
+        "breedRegistryBody": { "type": "string", "examples": ["The Jockey Club", "AQHA", "APHA", "AHA", "KWPN", "Hanoverian Verband", "USDF"], "privacyClass": "public" },
+        "sex": { "type": "string", "enum": ["stallion", "mare", "gelding", "colt", "filly", "ridgling"], "privacyClass": "public" },
+        "dateOfBirth": { "type": "string", "format": "date", "privacyClass": "shielded" },
+        "dateOfBirthEstimated": { "type": "boolean", "default": false, "privacyClass": "public" },
+        "color": { "type": "string", "examples": ["Bay", "Chestnut", "Gray", "Black", "Palomino", "Buckskin", "Pinto", "Roan", "Dun", "Cremello"], "privacyClass": "public" },
+        "markings": {
+          "type": "object",
+          "description": "Identifying markings — used on registration papers and for ID verification.",
+          "properties": {
+            "face": { "type": "string", "examples": ["Star", "Stripe", "Blaze", "Snip", "Bald face", "Star and stripe connected"], "privacyClass": "public" },
+            "legs": {
+              "type": "object",
+              "properties": {
+                "leftFore": { "type": "string", "examples": ["Sock", "Stocking", "Coronet band", "No white"], "privacyClass": "public" },
+                "rightFore": { "type": "string", "privacyClass": "public" },
+                "leftHind": { "type": "string", "privacyClass": "public" },
+                "rightHind": { "type": "string", "privacyClass": "public" }
+              },
+              "privacyClass": "public"
+            },
+            "body": { "type": "string", "description": "Any body markings, scars, brands, or identifying features.", "privacyClass": "public" },
+            "whorls": { "type": "array", "description": "Hair whorl locations — used for positive identification.", "items": { "type": "string", "examples": ["Forehead center", "Left neck", "Right flank"] }, "privacyClass": "public" }
+          },
+          "privacyClass": "public"
+        },
+        "heightHands": { "type": "number", "description": "Height at the withers in hands (1 hand = 4 inches). E.g., 16.2 = 16 hands 2 inches.", "privacyClass": "public" },
+        "currentWeightKg": { "type": "number", "description": "Most recent recorded weight in kg.", "privacyClass": "shielded" },
+        "bodyConditionScore": { "type": "integer", "minimum": 1, "maximum": 9, "description": "Henneke BCS 1-9 (1=poor, 5=moderate, 9=extremely fat).", "privacyClass": "shielded" }
+      },
+      "privacyClass": "public"
+    },
+
+    "names": {
+      "type": "object",
+      "properties": {
+        "barnName": { "type": "string", "description": "What the horse is called day-to-day.", "examples": ["Scout", "Pepper", "Blue"], "privacyClass": "shielded" },
+        "registeredName": { "type": "string", "description": "Formal registered name with breed registry.", "examples": ["AP Smart Little Lena", "Justify", "Valegro"], "privacyClass": "shielded" },
+        "raceName": { "type": "string", "description": "Name used in racing programs, if different.", "privacyClass": "shielded" },
+        "priorNames": { "type": "array", "items": { "type": "string" }, "description": "Names used by prior owners or at auction.", "privacyClass": "restricted" }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "registration": {
+      "type": "object",
+      "description": "Breed registration, microchip, brand, tattoo, and competition IDs.",
+      "properties": {
+        "breedRegistration": {
+          "type": "object",
+          "properties": {
+            "registryBody": { "type": "string", "privacyClass": "public" },
+            "registrationNumber": { "type": "string", "privacyClass": "shielded" },
+            "registeredDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+            "paperColor": { "type": "string", "description": "For breeds with tiered papers (e.g., AQHA regular vs appendix).", "privacyClass": "shielded" }
+          },
+          "privacyClass": "shielded"
+        },
+        "microchip": {
+          "type": "object",
+          "properties": {
+            "chipNumber": { "type": "string", "privacyClass": "shielded" },
+            "chipManufacturer": { "type": "string", "privacyClass": "public" },
+            "implantDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+            "implantLocation": { "type": "string", "default": "Left side of neck, nuchal ligament", "privacyClass": "shielded" }
+          },
+          "privacyClass": "shielded"
+        },
+        "brand": {
+          "type": "object",
+          "description": "Freeze brand or hot brand for identification.",
+          "properties": {
+            "brandType": { "type": "string", "enum": ["freeze_brand", "hot_brand", "lip_tattoo", "none"], "privacyClass": "public" },
+            "brandLocation": { "type": "string", "examples": ["Left hip", "Left shoulder", "Inside upper lip"], "privacyClass": "public" },
+            "brandId": { "type": "string", "privacyClass": "shielded" },
+            "brandRegistry": { "type": "string", "privacyClass": "shielded" }
+          },
+          "privacyClass": "shielded"
+        },
+        "competitionIds": {
+          "type": "array",
+          "description": "IDs with competition governing bodies.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "organization": { "type": "string", "examples": ["USEF", "FEI", "AQHA", "NRHA", "USHJA", "USEA", "USDF", "NCHA", "PRCA"], "privacyClass": "public" },
+              "memberId": { "type": "string", "privacyClass": "shielded" },
+              "status": { "type": "string", "enum": ["active", "inactive", "suspended", "retired"], "privacyClass": "public" }
+            }
+          },
+          "privacyClass": "shielded"
+        },
+        "passport": {
+          "type": "object",
+          "description": "FEI passport or national equine passport where required.",
+          "properties": {
+            "passportNumber": { "type": "string", "privacyClass": "shielded" },
+            "issuingAuthority": { "type": "string", "privacyClass": "public" },
+            "issueDate": { "type": "string", "format": "date", "privacyClass": "shielded" }
+          },
+          "privacyClass": "shielded"
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "pedigree": {
+      "type": "object",
+      "description": "Lineage and parentage. Critical for breeding value, genetic risk, and provenance.",
+      "properties": {
+        "sire": {
+          "type": "object",
+          "properties": {
+            "horseDID": { "type": "string", "description": "DID of sire if on platform.", "privacyClass": "shielded" },
+            "registeredName": { "type": "string", "privacyClass": "shielded" },
+            "registrationNumber": { "type": "string", "privacyClass": "shielded" },
+            "breed": { "type": "string", "privacyClass": "public" }
+          },
+          "privacyClass": "shielded"
+        },
+        "dam": {
+          "type": "object",
+          "properties": {
+            "horseDID": { "type": "string", "privacyClass": "shielded" },
+            "registeredName": { "type": "string", "privacyClass": "shielded" },
+            "registrationNumber": { "type": "string", "privacyClass": "shielded" },
+            "breed": { "type": "string", "privacyClass": "public" }
+          },
+          "privacyClass": "shielded"
+        },
+        "damSire": {
+          "type": "object",
+          "properties": {
+            "registeredName": { "type": "string", "privacyClass": "shielded" },
+            "breed": { "type": "string", "privacyClass": "public" }
+          },
+          "privacyClass": "shielded"
+        },
+        "linebreeding": { "type": "string", "description": "Notable linebreeding or outcross notes.", "privacyClass": "shielded" },
+        "pedigreeDepth": { "type": "integer", "description": "Number of verified generations. Typically 4-5 for registered breeds.", "privacyClass": "public" }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "dnaProfile": {
+      "type": "object",
+      "description": "Genetic testing — parentage verification, genetic disease panels, color genetics.",
+      "properties": {
+        "testProvider": { "type": "string", "examples": ["UC Davis VGL", "Animal Genetics", "Etalon Dx", "Weatherbys"], "privacyClass": "public" },
+        "testDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+        "parentageVerified": { "type": "boolean", "description": "DNA-confirmed parentage.", "privacyClass": "shielded" },
+        "geneticDiseasePanel": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "marker": { "type": "string", "examples": ["HYPP", "HERDA", "GBED", "PSSM1", "OLWS", "LWOS", "MH", "CA", "SCA", "LFS", "WFFS"], "privacyClass": "shielded" },
+              "status": { "type": "string", "enum": ["N/N (negative)", "N/H (carrier)", "H/H (affected)"], "privacyClass": "shielded" }
+            }
+          },
+          "privacyClass": "shielded"
+        },
+        "colorGenetics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "gene": { "type": "string", "examples": ["Extension (E)", "Agouti (A)", "Cream (Cr)", "Gray (G)", "Tobiano (TO)", "Frame Overo (O)"], "privacyClass": "shielded" },
+              "genotype": { "type": "string", "examples": ["E/E", "E/e", "A/a", "Cr/n", "G/n"], "privacyClass": "shielded" }
+            }
+          },
+          "privacyClass": "shielded"
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "photoHash": { "type": "string", "privacyClass": "public" },
+          "photoUri": { "type": "string", "privacyClass": "shielded" },
+          "dateTaken": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "photoType": { "type": "string", "enum": ["identification_left", "identification_right", "face", "markings", "brand", "conformation", "competition", "condition"], "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "discipline": {
+      "type": "array",
+      "description": "Primary discipline(s) this horse is trained/competed in.",
+      "items": { "type": "string", "examples": ["Hunter/Jumper", "Dressage", "Eventing", "Reining", "Cutting", "Barrel Racing", "Endurance", "Polo", "Racing (Flat)", "Racing (Steeplechase)", "Western Pleasure", "Trail", "Driving", "Breeding Only", "Retired/Pleasure"] },
+      "privacyClass": "public"
+    },
+
+    "createdAt": { "type": "string", "format": "date-time", "privacyClass": "public" },
+    "lastUpdated": { "type": "string", "format": "date-time", "privacyClass": "public" },
+    "status": { "type": "string", "enum": ["alive", "deceased", "missing", "exported", "retired", "unknown"], "privacyClass": "public" }
+  }
+}

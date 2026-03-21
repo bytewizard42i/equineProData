@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equineprodata.io/schemas/rwa-and-valuation.json",
+  "title": "EquineProData — RWA, Valuation, Syndication & Lifetime Costs",
+  "description": "Real World Asset classification, valuation history, syndication economics, stud fees, insurance, lifetime cost tracking, and revenue. Horses are high-value assets — a single Thoroughbred yearling can sell for millions, a top sport horse stallion can earn six figures annually in stud fees, and breeding rights alone can be worth more than the horse. This schema captures all of it.",
+  "type": "object",
+  "required": ["horseDID", "assetClassification"],
+  "properties": {
+
+    "horseDID": { "type": "string", "privacyClass": "public" },
+
+    "assetClassification": {
+      "type": "object",
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": ["pleasure_riding", "show_competition", "racing", "breeding_stallion", "breeding_mare", "breeding_prospect", "sport_horse", "working_ranch", "polo", "driving", "lesson_school", "therapy_program", "rescue_sanctuary", "retired", "investment_only"],
+          "privacyClass": "shielded"
+        },
+        "breedingStatus": { "type": "string", "enum": ["not_applicable", "active_breeding", "prospect", "retired_breeding", "gelded"], "privacyClass": "shielded" },
+        "competitionLevel": { "type": "string", "enum": ["none", "local", "regional", "national", "international", "olympic_level", "graded_stakes", "listed_stakes"], "privacyClass": "public" },
+        "taxClassification": { "type": "string", "description": "How the horse is classified for tax purposes.", "enum": ["personal_use", "business_asset", "depreciated_asset", "breeding_stock", "racing_stock", "investment_property"], "privacyClass": "restricted" }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "valuation": {
+      "type": "object",
+      "properties": {
+        "acquisitionCost": { "type": "number", "privacyClass": "restricted" },
+        "acquisitionMethod": { "type": "string", "enum": ["private_sale", "public_auction", "claiming_race", "bred_in_house", "gift", "inheritance", "rescue", "trade"], "privacyClass": "restricted" },
+        "currentEstimatedValue": { "type": "number", "privacyClass": "restricted" },
+        "valuationDate": { "type": "string", "format": "date", "privacyClass": "restricted" },
+        "valuationMethod": { "type": "string", "enum": ["purchase_price", "replacement_cost", "professional_appraisal", "comparable_sales", "breeding_income_capitalization", "racing_earnings_projection", "insurance_agreed_value"], "privacyClass": "restricted" },
+        "valuationHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": { "type": "string", "format": "date", "privacyClass": "restricted" },
+              "value": { "type": "number", "privacyClass": "restricted" },
+              "method": { "type": "string", "privacyClass": "restricted" },
+              "appraiserDID": { "type": "string", "privacyClass": "restricted" },
+              "reason": { "type": "string", "examples": ["Insurance renewal", "Pre-sale appraisal", "Estate planning", "Divorce proceeding", "Syndication offering", "Tax reporting"], "privacyClass": "restricted" }
+            }
+          },
+          "privacyClass": "restricted"
+        },
+        "breedingValue": {
+          "type": "object",
+          "description": "Economic value derived from breeding activity.",
+          "properties": {
+            "annualStudFee": { "type": "number", "description": "Current advertised stud fee (stallions).", "privacyClass": "restricted" },
+            "studFeeHistory": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "year": { "type": "integer", "privacyClass": "restricted" },
+                  "fee": { "type": "number", "privacyClass": "restricted" },
+                  "bookSize": { "type": "integer", "description": "Number of mares bred that year.", "privacyClass": "restricted" }
+                }
+              },
+              "privacyClass": "restricted"
+            },
+            "lifetimeProgeny": { "type": "integer", "description": "Total registered offspring.", "privacyClass": "shielded" },
+            "stakesWinners": { "type": "integer", "description": "Number of offspring that won stakes/graded events.", "privacyClass": "shielded" },
+            "progenyEarnings": { "type": "number", "description": "Total competition earnings of all offspring.", "privacyClass": "restricted" },
+            "averageOffspringValue": { "type": "number", "privacyClass": "restricted" }
+          },
+          "privacyClass": "restricted"
+        },
+        "competitionEarnings": {
+          "type": "object",
+          "properties": {
+            "lifetimeEarnings": { "type": "number", "description": "Total prize money won in competition.", "privacyClass": "restricted" },
+            "earningsByYear": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "year": { "type": "integer", "privacyClass": "restricted" },
+                  "earnings": { "type": "number", "privacyClass": "restricted" },
+                  "starts": { "type": "integer", "privacyClass": "shielded" },
+                  "wins": { "type": "integer", "privacyClass": "shielded" }
+                }
+              },
+              "privacyClass": "restricted"
+            }
+          },
+          "privacyClass": "restricted"
+        }
+      },
+      "privacyClass": "restricted"
+    },
+
+    "lifetimeCostTracker": {
+      "type": "object",
+      "description": "Cumulative cost tracking. Horses are expensive — average $5,000-$10,000+/year for basic care, far more for competition horses.",
+      "properties": {
+        "currency": { "type": "string", "default": "USD", "privacyClass": "restricted" },
+        "totalLifetimeCost": { "type": "number", "privacyClass": "restricted" },
+        "costByCategory": {
+          "type": "object",
+          "properties": {
+            "acquisition": { "type": "number", "privacyClass": "restricted" },
+            "board": { "type": "number", "description": "Monthly boarding fees — often the largest ongoing cost.", "privacyClass": "restricted" },
+            "feed_hay": { "type": "number", "privacyClass": "restricted" },
+            "supplements": { "type": "number", "privacyClass": "restricted" },
+            "veterinaryRoutine": { "type": "number", "description": "Wellness, vaccines, dental, coggins.", "privacyClass": "restricted" },
+            "veterinaryIllness": { "type": "number", "privacyClass": "restricted" },
+            "veterinaryEmergency": { "type": "number", "description": "Colic surgery alone can be $10,000+.", "privacyClass": "restricted" },
+            "surgery": { "type": "number", "privacyClass": "restricted" },
+            "farrier": { "type": "number", "description": "Every 4-8 weeks — $50-$300+ per visit.", "privacyClass": "restricted" },
+            "dental": { "type": "number", "privacyClass": "restricted" },
+            "medications": { "type": "number", "privacyClass": "restricted" },
+            "diagnostics": { "type": "number", "privacyClass": "restricted" },
+            "training": { "type": "number", "description": "Professional training fees.", "privacyClass": "restricted" },
+            "lessons_coaching": { "type": "number", "privacyClass": "restricted" },
+            "competition_entries": { "type": "number", "description": "Show/race entry fees, stall fees, memberships.", "privacyClass": "restricted" },
+            "transport": { "type": "number", "description": "Hauling to shows, vet, new facility.", "privacyClass": "restricted" },
+            "insurance_premiums": { "type": "number", "privacyClass": "restricted" },
+            "tack_equipment": { "type": "number", "description": "Saddles, bridles, blankets, boots.", "privacyClass": "restricted" },
+            "breeding_costs": { "type": "number", "description": "Stud fees, mare care, foaling, AI, embryo transfer.", "privacyClass": "restricted" },
+            "registration_membership": { "type": "number", "privacyClass": "restricted" },
+            "rehab_therapy": { "type": "number", "description": "Rehab, cold laser, shockwave, acupuncture, chiro.", "privacyClass": "restricted" },
+            "other": { "type": "number", "privacyClass": "restricted" }
+          },
+          "privacyClass": "restricted"
+        },
+        "costByYear": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "year": { "type": "integer", "privacyClass": "restricted" },
+              "totalCost": { "type": "number", "privacyClass": "restricted" }
+            }
+          },
+          "privacyClass": "restricted"
+        },
+        "lastUpdated": { "type": "string", "format": "date-time", "privacyClass": "restricted" }
+      },
+      "privacyClass": "restricted"
+    },
+
+    "insurance": {
+      "type": "object",
+      "properties": {
+        "currentPolicy": {
+          "type": "object",
+          "properties": {
+            "insurerName": { "type": "string", "examples": ["Markel", "Great American", "Broadstone Equine", "CHUBB", "Hartford"], "privacyClass": "shielded" },
+            "insurerDID": { "type": "string", "privacyClass": "shielded" },
+            "policyNumber": { "type": "string", "privacyClass": "restricted" },
+            "coverageTypes": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["mortality", "major_medical", "surgical", "colic_surgery", "loss_of_use", "stallion_infertility", "mare_barrenness", "transit", "liability", "prospective_foal"] },
+              "privacyClass": "shielded"
+            },
+            "agreedValue": { "type": "number", "description": "Agreed insured value of the horse.", "privacyClass": "restricted" },
+            "annualPremium": { "type": "number", "privacyClass": "restricted" },
+            "deductible": { "type": "number", "privacyClass": "restricted" },
+            "effectiveDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+            "renewalDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+            "exclusions": { "type": "array", "items": { "type": "string" }, "privacyClass": "restricted" },
+            "policyDocumentHash": { "type": "string", "privacyClass": "public" }
+          },
+          "privacyClass": "shielded"
+        },
+        "claimsHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "claimId": { "type": "string", "privacyClass": "restricted" },
+              "claimDate": { "type": "string", "format": "date", "privacyClass": "restricted" },
+              "claimType": { "type": "string", "enum": ["mortality", "major_medical", "surgical", "colic", "loss_of_use", "transit_injury", "theft"], "privacyClass": "restricted" },
+              "condition": { "type": "string", "privacyClass": "restricted" },
+              "amountClaimed": { "type": "number", "privacyClass": "restricted" },
+              "amountPaid": { "type": "number", "privacyClass": "restricted" },
+              "status": { "type": "string", "enum": ["submitted", "under_review", "approved", "partially_approved", "denied", "appealed"], "privacyClass": "restricted" },
+              "invoiceHash": { "type": "string", "privacyClass": "public" }
+            }
+          },
+          "privacyClass": "restricted"
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "revenueGenerated": {
+      "type": "object",
+      "properties": {
+        "breedingIncome": { "type": "number", "description": "Total stud fees, mare lease fees, embryo sales.", "privacyClass": "restricted" },
+        "competitionPrizeMoney": { "type": "number", "privacyClass": "restricted" },
+        "saleOfOffspring": { "type": "number", "privacyClass": "restricted" },
+        "leaseIncome": { "type": "number", "description": "Income from leasing the horse to others.", "privacyClass": "restricted" },
+        "sponsorships": { "type": "number", "privacyClass": "restricted" },
+        "researchCompensation": { "type": "number", "privacyClass": "restricted" },
+        "mediaAppearances": { "type": "number", "privacyClass": "restricted" },
+        "totalRevenueGenerated": { "type": "number", "privacyClass": "restricted" },
+        "netPositionLifetime": { "type": "number", "description": "Revenue minus costs. The true P&L of horse ownership.", "privacyClass": "restricted" }
+      },
+      "privacyClass": "restricted"
+    }
+  }
+}
