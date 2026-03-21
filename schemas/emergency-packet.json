@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equineprodata.io/schemas/emergency-packet.json",
+  "title": "EquineProData — Emergency Packet",
+  "description": "Pre-authorized emergency disclosure for horses. When a horse presents at an emergency clinic, is found injured in a field, colics during transport, or arrives at an unknown facility, this packet becomes accessible via QR trailer tag, stable credential, or chip scan. Equine emergencies — especially colic — are time-critical and life-threatening. This packet is governed by a Midnight Emergency Reveal Policy contract.",
+  "type": "object",
+  "required": ["horseDID", "emergencyRevealPolicy", "criticalMedical", "emergencyContacts"],
+  "properties": {
+
+    "horseDID": { "type": "string", "privacyClass": "public" },
+
+    "emergencyRevealPolicy": {
+      "type": "object",
+      "properties": {
+        "policyContractAddress": { "type": "string", "privacyClass": "public" },
+        "revealTriggers": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["emergency_clinic_scan", "barn_manager_unlock", "trailer_tag_scan", "owner_manual_unlock", "authorized_contact_unlock", "animal_control_scan", "law_enforcement_request"] },
+          "privacyClass": "public"
+        },
+        "revealDurationHours": { "type": "integer", "default": 24, "privacyClass": "public" },
+        "financialAuthorizationLimit": { "type": "number", "description": "Maximum dollar amount authorized for emergency treatment without owner confirmation.", "privacyClass": "emergency" },
+        "auditRequired": { "type": "boolean", "default": true, "privacyClass": "public" }
+      },
+      "privacyClass": "public"
+    },
+
+    "quickIdentification": {
+      "type": "object",
+      "properties": {
+        "breed": { "type": "string", "privacyClass": "emergency" },
+        "barnName": { "type": "string", "privacyClass": "emergency" },
+        "registeredName": { "type": "string", "privacyClass": "emergency" },
+        "color": { "type": "string", "privacyClass": "emergency" },
+        "sex": { "type": "string", "privacyClass": "emergency" },
+        "approximateAge": { "type": "string", "privacyClass": "emergency" },
+        "heightHands": { "type": "number", "privacyClass": "emergency" },
+        "weightKg": { "type": "number", "privacyClass": "emergency" },
+        "microchipNumber": { "type": "string", "privacyClass": "emergency" },
+        "brandDescription": { "type": "string", "privacyClass": "emergency" },
+        "photoUri": { "type": "string", "privacyClass": "emergency" }
+      },
+      "privacyClass": "emergency"
+    },
+
+    "criticalMedical": {
+      "type": "object",
+      "description": "Life-or-death information an emergency equine vet needs immediately. Colic, laminitis, and anesthesia decisions depend on this data.",
+      "properties": {
+        "knownAllergies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "allergen": { "type": "string", "examples": ["Procaine penicillin (anaphylaxis)", "Acepromazine", "Banamine (oral — GI ulceration hx)"], "privacyClass": "emergency" },
+              "severity": { "type": "string", "enum": ["mild", "moderate", "severe", "anaphylaxis"], "privacyClass": "emergency" },
+              "reaction": { "type": "string", "privacyClass": "emergency" }
+            }
+          },
+          "privacyClass": "emergency"
+        },
+        "currentMedications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "drugName": { "type": "string", "examples": ["GastroGard (omeprazole) 1 tube SID", "Prascend (pergolide) 1mg SID", "Thyro-L (levothyroxine) 48mg SID", "Equioxx (firocoxib) 57mg SID"], "privacyClass": "emergency" },
+              "dose": { "type": "string", "privacyClass": "emergency" },
+              "frequency": { "type": "string", "privacyClass": "emergency" },
+              "reason": { "type": "string", "privacyClass": "emergency" }
+            }
+          },
+          "privacyClass": "emergency"
+        },
+        "colicHistory": {
+          "type": "object",
+          "description": "CRITICAL for equine emergencies. Colic is the #1 killer of horses. Prior colic history directly affects treatment decisions.",
+          "properties": {
+            "hasColicHistory": { "type": "boolean", "privacyClass": "emergency" },
+            "episodeCount": { "type": "integer", "description": "Total lifetime colic episodes.", "privacyClass": "emergency" },
+            "priorColicSurgery": { "type": "boolean", "privacyClass": "emergency" },
+            "surgeryDate": { "type": "string", "format": "date", "privacyClass": "emergency" },
+            "surgeryType": { "type": "string", "examples": ["Large colon resection and anastomosis", "Small intestinal resection", "Large colon decompression", "Nephrosplenic entrapment correction"], "privacyClass": "emergency" },
+            "typicalColicType": { "type": "string", "examples": ["Gas colic — resolves with Banamine", "Impaction — requires fluids", "Recurrent sand colic", "Recurrent gas colic post-feed change"], "privacyClass": "emergency" },
+            "lastEpisodeDate": { "type": "string", "format": "date", "privacyClass": "emergency" }
+          },
+          "privacyClass": "emergency"
+        },
+        "laminitisHistory": {
+          "type": "object",
+          "description": "Laminitis/founder history — affects treatment, drug choices, and anesthesia risk.",
+          "properties": {
+            "hasLaminitisHistory": { "type": "boolean", "privacyClass": "emergency" },
+            "isActivelyLaminitic": { "type": "boolean", "privacyClass": "emergency" },
+            "chronicFounder": { "type": "boolean", "privacyClass": "emergency" },
+            "rotationDegrees": { "type": "number", "description": "Last measured coffin bone rotation.", "privacyClass": "emergency" },
+            "triggerHistory": { "type": "string", "examples": ["Grain overload 2022", "Pasture-associated (metabolic)", "Steroid-induced", "Contralateral limb (supporting limb)"], "privacyClass": "emergency" },
+            "currentManagement": { "type": "string", "examples": ["Therapeutic shoeing q5 weeks, dry lot only, soaked hay, Prascend"], "privacyClass": "emergency" }
+          },
+          "privacyClass": "emergency"
+        },
+        "sedationContraindications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "drug": { "type": "string", "examples": ["Acepromazine (HYPP positive)", "Xylazine (cardiac arrhythmia hx)", "Romifidine (hypotension risk)"], "privacyClass": "emergency" },
+              "reason": { "type": "string", "privacyClass": "emergency" }
+            }
+          },
+          "privacyClass": "emergency"
+        },
+        "anesthesiaRisk": {
+          "type": "object",
+          "description": "Factors that increase general anesthesia risk — critical if colic surgery is considered.",
+          "properties": {
+            "riskLevel": { "type": "string", "enum": ["standard", "elevated", "high", "extreme"], "privacyClass": "emergency" },
+            "factors": { "type": "array", "items": { "type": "string", "examples": ["HYPP positive", "History of malignant hyperthermia", "Cardiac arrhythmia", "Age >25", "Severe metabolic disease", "Morbid obesity", "Prior anesthetic complication", "Fractured bar on recovering from anesthesia"] }, "privacyClass": "emergency" }
+          },
+          "privacyClass": "emergency"
+        },
+        "chronicConditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "condition": { "type": "string", "examples": ["PPID (Cushing's)", "Equine Metabolic Syndrome", "Insulin dysregulation", "Recurrent Airway Obstruction (heaves)", "HYPP (N/H)", "Anhidrosis", "Melanomas (gray horse)", "Recurrent uveitis (moon blindness)", "Cervical vertebral stenotic myelopathy (Wobblers)"], "privacyClass": "emergency" },
+              "severity": { "type": "string", "privacyClass": "emergency" },
+              "managedBy": { "type": "string", "privacyClass": "emergency" }
+            }
+          },
+          "privacyClass": "emergency"
+        },
+        "recentSurgery": {
+          "type": "object",
+          "properties": {
+            "procedure": { "type": "string", "privacyClass": "emergency" },
+            "date": { "type": "string", "format": "date", "privacyClass": "emergency" },
+            "restrictions": { "type": "string", "privacyClass": "emergency" }
+          },
+          "privacyClass": "emergency"
+        },
+        "infectiousDiseaseFlag": {
+          "type": "object",
+          "description": "Biosecurity risk — should this horse be isolated?",
+          "properties": {
+            "isContagious": { "type": "boolean", "privacyClass": "emergency" },
+            "disease": { "type": "string", "examples": ["Strangles (active shedder)", "EHV-1 exposure (monitoring)", "Ringworm"], "privacyClass": "emergency" },
+            "isolationRequired": { "type": "boolean", "privacyClass": "emergency" },
+            "quarantineStatus": { "type": "string", "enum": ["not_quarantined", "active_quarantine", "quarantine_released"], "privacyClass": "emergency" }
+          },
+          "privacyClass": "emergency"
+        },
+        "pregnancyStatus": {
+          "type": "object",
+          "properties": {
+            "isPregnant": { "type": "boolean", "privacyClass": "emergency" },
+            "gestationDays": { "type": "integer", "privacyClass": "emergency" },
+            "expectedFoalingDate": { "type": "string", "format": "date", "privacyClass": "emergency" },
+            "highRiskPregnancy": { "type": "boolean", "privacyClass": "emergency" }
+          },
+          "privacyClass": "emergency"
+        },
+        "competitionDrugRestrictions": {
+          "type": "object",
+          "description": "If this horse is a competition horse, emergency vets need to know what drugs to avoid to protect eligibility.",
+          "properties": {
+            "isCompetitionHorse": { "type": "boolean", "privacyClass": "emergency" },
+            "governingBody": { "type": "string", "privacyClass": "emergency" },
+            "nextCompetitionDate": { "type": "string", "format": "date", "privacyClass": "emergency" },
+            "restrictedDrugs": { "type": "array", "items": { "type": "string" }, "description": "Drugs that would trigger a positive drug test.", "privacyClass": "emergency" }
+          },
+          "privacyClass": "emergency"
+        },
+        "dnrStatus": { "type": "boolean", "description": "Do Not Resuscitate directive.", "privacyClass": "emergency" },
+        "euthanasiaAuthorization": { "type": "string", "description": "Pre-authorization level for humane euthanasia in catastrophic situations.", "enum": ["owner_must_be_reached", "authorized_contact_can_decide", "vet_discretion_for_suffering", "pre_authorized_specific_conditions"], "privacyClass": "emergency" }
+      },
+      "privacyClass": "emergency"
+    },
+
+    "emergencyContacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "privacyClass": "emergency" },
+          "phone": { "type": "string", "privacyClass": "emergency" },
+          "relationship": { "type": "string", "examples": ["owner", "barn_manager", "trainer", "spouse", "farm_manager", "co_owner"], "privacyClass": "emergency" },
+          "authorizationLevel": { "type": "string", "enum": ["emergency_medical_only", "full_medical_decisions", "financial_up_to_limit", "all_decisions_including_euthanasia"], "privacyClass": "emergency" },
+          "financialLimit": { "type": "number", "privacyClass": "emergency" },
+          "priority": { "type": "integer", "privacyClass": "emergency" }
+        }
+      },
+      "privacyClass": "emergency"
+    },
+
+    "primaryVet": {
+      "type": "object",
+      "properties": {
+        "practiceName": { "type": "string", "privacyClass": "emergency" },
+        "veterinarianName": { "type": "string", "privacyClass": "emergency" },
+        "phone": { "type": "string", "privacyClass": "emergency" },
+        "afterHoursPhone": { "type": "string", "privacyClass": "emergency" }
+      },
+      "privacyClass": "emergency"
+    },
+
+    "insuranceInfo": {
+      "type": "object",
+      "properties": {
+        "insurerName": { "type": "string", "privacyClass": "emergency" },
+        "policyNumber": { "type": "string", "privacyClass": "emergency" },
+        "claimsPhone": { "type": "string", "privacyClass": "emergency" },
+        "agreedValue": { "type": "number", "description": "Insured value — ER vet needs this for treatment authorization decisions.", "privacyClass": "emergency" },
+        "hasMajorMedical": { "type": "boolean", "privacyClass": "emergency" },
+        "hasColicSurgery": { "type": "boolean", "description": "Whether colic surgery is covered — directly affects whether surgery is an option.", "privacyClass": "emergency" },
+        "surgicalCoverageLimit": { "type": "number", "privacyClass": "emergency" }
+      },
+      "privacyClass": "emergency"
+    },
+
+    "currentLocation": {
+      "type": "object",
+      "description": "Where the horse is normally kept — useful if horse is found loose or arrives without context.",
+      "properties": {
+        "facilityName": { "type": "string", "privacyClass": "emergency" },
+        "address": { "type": "string", "privacyClass": "emergency" },
+        "phone": { "type": "string", "privacyClass": "emergency" }
+      },
+      "privacyClass": "emergency"
+    }
+  }
+}

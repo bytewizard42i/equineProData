@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equineprodata.io/schemas/permissions-and-consent.json",
+  "title": "EquineProData — Permissions, Consent & Audit Log",
+  "description": "Multi-role access grants, time-limited leases, research consent, and tamper-proof audit trail. Horses have far more stakeholders touching their records than pets — owner, co-owners, trainer, barn manager, vet, farrier, dentist, breeder, buyer, insurer, regulator, show authority, and transporter all need different slices of the data.",
+  "type": "object",
+  "required": ["horseDID", "accessGrants"],
+  "properties": {
+
+    "horseDID": { "type": "string", "privacyClass": "public" },
+
+    "accessGrants": {
+      "type": "array",
+      "description": "Active and historical access grants. Each grant gives a specific entity access to specific folders for a specific purpose and duration.",
+      "items": {
+        "type": "object",
+        "required": ["grantId", "grantedTo", "folders", "purpose", "grantedAt", "status"],
+        "properties": {
+          "grantId": { "type": "string", "privacyClass": "public" },
+          "grantedTo": {
+            "type": "object",
+            "properties": {
+              "entityDID": { "type": "string", "privacyClass": "shielded" },
+              "entityName": { "type": "string", "privacyClass": "shielded" },
+              "entityRole": {
+                "type": "string",
+                "enum": [
+                  "veterinarian", "emergency_clinic", "specialist", "surgeon",
+                  "barn_manager", "trainer", "assistant_trainer",
+                  "farrier", "equine_dentist",
+                  "breeder", "stallion_manager", "breeding_facility",
+                  "buyer", "buyers_vet",
+                  "insurer", "insurance_adjuster",
+                  "transporter", "hauler",
+                  "show_authority", "racing_commission", "drug_testing_lab",
+                  "breed_registry",
+                  "researcher",
+                  "co_owner", "syndicate_manager",
+                  "animal_control", "state_veterinarian",
+                  "export_authority",
+                  "lien_holder"
+                ],
+                "privacyClass": "shielded"
+              }
+            },
+            "privacyClass": "shielded"
+          },
+          "grantedBy": {
+            "type": "object",
+            "properties": {
+              "ownerDID": { "type": "string", "privacyClass": "shielded" },
+              "ownerName": { "type": "string", "privacyClass": "shielded" },
+              "delegatedBy": { "type": "string", "description": "If grant was created by an authorized delegate (e.g., barn manager on behalf of owner).", "privacyClass": "shielded" }
+            },
+            "privacyClass": "shielded"
+          },
+          "folders": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "identity", "ownership", "syndication", "liens",
+                "vaccines", "coggins", "health_certificates",
+                "allergies", "medications", "drug_compliance",
+                "surgeries", "clinical_history",
+                "lab_results", "imaging",
+                "chronic_conditions",
+                "lameness_history",
+                "breeding", "lineage", "offspring", "genetic_panels",
+                "performance", "competition", "race_results", "training",
+                "hoof_farrier", "dental",
+                "transport", "movement_history",
+                "insurance", "rwa_valuation", "billing",
+                "behavioral",
+                "research_consent",
+                "emergency_packet",
+                "end_of_life",
+                "pre_purchase_exam",
+                "all"
+              ]
+            },
+            "privacyClass": "shielded"
+          },
+          "proofOnly": {
+            "type": "boolean",
+            "description": "If true, recipient gets zk-proof attestations only (e.g., 'Coggins current = true', 'drug compliant = true'), not raw data.",
+            "default": false,
+            "privacyClass": "shielded"
+          },
+          "purpose": {
+            "type": "string",
+            "examples": [
+              "Annual wellness exam",
+              "Pre-purchase examination for prospective buyer",
+              "USEF drug compliance verification for Devon Horse Show",
+              "Insurance renewal — mortality and major medical",
+              "Breeding soundness evaluation — stallion service contract",
+              "Interstate transport to WEF — CVI and Coggins verification",
+              "Colic surgery consultation and referral",
+              "Buyer due diligence — sale listing",
+              "Syndication offering — valuation and performance review",
+              "University research study — equine metabolic syndrome prevalence"
+            ],
+            "privacyClass": "shielded"
+          },
+          "grantedAt": { "type": "string", "format": "date-time", "privacyClass": "shielded" },
+          "expiresAt": { "type": "string", "format": "date-time", "privacyClass": "shielded" },
+          "status": { "type": "string", "enum": ["active", "expired", "revoked", "pending_approval"], "privacyClass": "public" },
+          "revokedAt": { "type": "string", "format": "date-time", "privacyClass": "shielded" },
+          "revokedReason": { "type": "string", "privacyClass": "shielded" },
+          "transactionHash": { "type": "string", "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "commonGrantTemplates": {
+      "type": "array",
+      "description": "Pre-configured permission templates for common equine scenarios. Owners can apply these instead of configuring from scratch.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "templateName": {
+            "type": "string",
+            "examples": [
+              "Vet Visit — Full Clinical Access (24hr)",
+              "Boarding Barn — Identity + Vaccines + Emergency (duration of stay)",
+              "Trainer — Identity + Performance + Clinical Summary (ongoing)",
+              "Farrier — Hoof Records + Lameness + Imaging (ongoing)",
+              "Buyer PPE — Clinical + Lameness + Imaging + Performance (7 days)",
+              "Insurer Claim — Clinical + Billing + Imaging (per claim)",
+              "Show Entry — Identity + Vaccines + Coggins + Drug Compliance (proof only)",
+              "Interstate Transport — Identity + Coggins + Health Cert (proof only, 30 days)",
+              "Breeding Contract — Breeding + Lineage + Genetic Panels + Ownership (per contract)",
+              "Research Study — Clinical + Chronic Conditions (anonymized, per study)"
+            ],
+            "privacyClass": "shielded"
+          },
+          "folders": { "type": "array", "items": { "type": "string" }, "privacyClass": "shielded" },
+          "proofOnly": { "type": "boolean", "privacyClass": "shielded" },
+          "defaultDuration": { "type": "string", "examples": ["24 hours", "7 days", "30 days", "duration of stay", "per contract", "ongoing"], "privacyClass": "shielded" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "researchConsent": {
+      "type": "object",
+      "properties": {
+        "globalOptIn": { "type": "boolean", "default": false, "privacyClass": "shielded" },
+        "allowedStudyTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "breed_health_survey",
+              "colic_prevalence",
+              "laminitis_research",
+              "lameness_study",
+              "metabolic_disease",
+              "drug_efficacy_trial",
+              "nutrition_study",
+              "genetic_research",
+              "longevity_study",
+              "vaccine_safety",
+              "reproductive_study",
+              "performance_analysis",
+              "behavioral_study"
+            ]
+          },
+          "privacyClass": "shielded"
+        },
+        "compensationPreference": {
+          "type": "string",
+          "enum": ["micropayment_per_query", "flat_fee_per_study", "donation_to_equine_rescue", "no_compensation", "negotiable"],
+          "privacyClass": "shielded"
+        },
+        "walletAddress": { "type": "string", "privacyClass": "restricted" },
+        "activeStudies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "studyId": { "type": "string", "privacyClass": "shielded" },
+              "studyName": { "type": "string", "privacyClass": "shielded" },
+              "sponsorDID": { "type": "string", "privacyClass": "shielded" },
+              "enrolledDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+              "compensationEarned": { "type": "number", "privacyClass": "restricted" }
+            }
+          },
+          "privacyClass": "shielded"
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "auditLog": {
+      "type": "array",
+      "description": "Tamper-proof log of every access event. Anchored on-chain via Midnight.",
+      "items": {
+        "type": "object",
+        "required": ["eventId", "timestamp", "action", "actorDID"],
+        "properties": {
+          "eventId": { "type": "string", "privacyClass": "public" },
+          "timestamp": { "type": "string", "format": "date-time", "privacyClass": "public" },
+          "action": {
+            "type": "string",
+            "enum": [
+              "view", "download", "proof_generated", "proof_verified",
+              "grant_created", "grant_revoked",
+              "record_created", "record_updated", "record_amended",
+              "emergency_reveal",
+              "transfer_initiated", "transfer_completed",
+              "ppe_report_generated", "ppe_report_accessed",
+              "insurance_claim_accessed", "insurance_exam_submitted",
+              "breeding_record_shared", "lineage_verified",
+              "drug_compliance_checked",
+              "coggins_verified", "health_cert_verified",
+              "research_query_matched",
+              "syndication_record_accessed",
+              "lien_status_checked",
+              "competition_record_shared"
+            ],
+            "privacyClass": "public"
+          },
+          "actorDID": { "type": "string", "privacyClass": "shielded" },
+          "actorRole": { "type": "string", "privacyClass": "shielded" },
+          "foldersAccessed": { "type": "array", "items": { "type": "string" }, "privacyClass": "shielded" },
+          "grantId": { "type": "string", "privacyClass": "shielded" },
+          "transactionHash": { "type": "string", "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "shielded"
+    }
+  }
+}

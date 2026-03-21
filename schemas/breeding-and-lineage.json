@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equineprodata.io/schemas/breeding-and-lineage.json",
+  "title": "EquineProData — Breeding, Lineage & Reproductive Records",
+  "description": "Stallion breeding reports, mare reproductive records, foaling, artificial insemination, embryo transfer, genetic panels, and offspring tracking. Breeding is where equine RWA value concentrates — stud fees, breeding rights, embryo ownership, and lineage provenance are all high-value data.",
+  "type": "object",
+  "required": ["horseDID", "reproductiveStatus"],
+  "properties": {
+
+    "horseDID": { "type": "string", "privacyClass": "public" },
+
+    "reproductiveStatus": {
+      "type": "object",
+      "properties": {
+        "sex": { "type": "string", "enum": ["stallion", "mare", "gelding"], "privacyClass": "public" },
+        "breedingStatus": { "type": "string", "enum": ["active_breeding", "maiden", "retired_breeding", "gelded", "not_applicable"], "privacyClass": "shielded" },
+        "fertilityStatus": { "type": "string", "enum": ["proven", "unproven", "subfertile", "infertile", "unknown"], "privacyClass": "shielded" },
+        "lastReproductiveExamDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+        "reproductiveExamSummary": { "type": "string", "privacyClass": "shielded" }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "stallionRecord": {
+      "type": "object",
+      "description": "Stallion-specific breeding data. Only populated for intact males standing at stud.",
+      "properties": {
+        "standingAt": { "type": "string", "description": "Farm/facility where the stallion stands.", "privacyClass": "shielded" },
+        "standingAtDID": { "type": "string", "privacyClass": "shielded" },
+        "stallionManagerDID": { "type": "string", "privacyClass": "shielded" },
+        "currentStudFee": { "type": "number", "privacyClass": "restricted" },
+        "studFeeTerms": { "type": "string", "description": "LFG (live foal guarantee), NFFR (no foal free return), etc.", "enum": ["LFG", "NFFR", "guaranteed_in_foal", "no_guarantee", "private_treaty"], "privacyClass": "restricted" },
+        "breedingMethods": { "type": "array", "items": { "type": "string", "enum": ["live_cover", "fresh_cooled_semen", "frozen_semen", "on_farm_AI_only"] }, "privacyClass": "shielded" },
+        "bookLimit": { "type": "integer", "description": "Maximum mares per breeding season.", "privacyClass": "shielded" },
+        "semenEvaluation": {
+          "type": "object",
+          "description": "Most recent semen analysis.",
+          "properties": {
+            "evaluationDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+            "totalMotility": { "type": "number", "description": "Percentage.", "privacyClass": "shielded" },
+            "progressiveMotility": { "type": "number", "privacyClass": "shielded" },
+            "concentration": { "type": "string", "description": "Million sperm per mL.", "privacyClass": "shielded" },
+            "morphology": { "type": "number", "description": "Percentage normal morphology.", "privacyClass": "shielded" },
+            "coolShipViability": { "type": "string", "enum": ["excellent", "good", "fair", "poor"], "privacyClass": "shielded" },
+            "frozenViability": { "type": "string", "enum": ["excellent", "good", "fair", "poor", "not_tested"], "privacyClass": "shielded" }
+          },
+          "privacyClass": "shielded"
+        },
+        "seasonalRecords": {
+          "type": "array",
+          "description": "Per-season breeding statistics.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "year": { "type": "integer", "privacyClass": "restricted" },
+              "maresBred": { "type": "integer", "privacyClass": "restricted" },
+              "pregnanciesConfirmed": { "type": "integer", "privacyClass": "restricted" },
+              "liveFoals": { "type": "integer", "privacyClass": "restricted" },
+              "conceptionRate": { "type": "number", "description": "Percentage.", "privacyClass": "restricted" }
+            }
+          },
+          "privacyClass": "restricted"
+        },
+        "frozenSemenInventory": {
+          "type": "object",
+          "description": "Stored frozen semen — can have significant value even after stallion's death.",
+          "properties": {
+            "totalDoses": { "type": "integer", "privacyClass": "restricted" },
+            "storageLocations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "facilityName": { "type": "string", "privacyClass": "restricted" },
+                  "facilityDID": { "type": "string", "privacyClass": "restricted" },
+                  "dosesStored": { "type": "integer", "privacyClass": "restricted" },
+                  "collectionDates": { "type": "array", "items": { "type": "string", "format": "date" }, "privacyClass": "restricted" }
+                }
+              },
+              "privacyClass": "restricted"
+            },
+            "pricePerDose": { "type": "number", "privacyClass": "restricted" }
+          },
+          "privacyClass": "restricted"
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "mareRecord": {
+      "type": "object",
+      "description": "Mare-specific reproductive data.",
+      "properties": {
+        "cyclicityStatus": { "type": "string", "enum": ["cycling_normally", "transitional", "anestrus_seasonal", "persistent_CL", "abnormal", "unknown"], "privacyClass": "shielded" },
+        "breedingSoundnessExam": {
+          "type": "object",
+          "properties": {
+            "examDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+            "uterineScore": { "type": "string", "enum": ["I (maiden/foaling)", "IIA", "IIB", "III (degenerative)"], "description": "Kenney-Doig uterine biopsy classification.", "privacyClass": "shielded" },
+            "cervixCondition": { "type": "string", "privacyClass": "shielded" },
+            "ovaryFindings": { "type": "string", "privacyClass": "shielded" },
+            "uterineCulture": { "type": "string", "enum": ["no_growth", "positive_treated", "positive_untreated"], "privacyClass": "shielded" },
+            "overallAssessment": { "type": "string", "enum": ["excellent_candidate", "good_candidate", "fair_candidate", "poor_candidate"], "privacyClass": "shielded" }
+          },
+          "privacyClass": "shielded"
+        },
+        "breedingHistory": {
+          "type": "array",
+          "description": "Per-breeding-cycle records.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "breedingYear": { "type": "integer", "privacyClass": "shielded" },
+              "stallionDID": { "type": "string", "privacyClass": "shielded" },
+              "stallionName": { "type": "string", "privacyClass": "shielded" },
+              "breedingMethod": { "type": "string", "enum": ["live_cover", "fresh_cooled_AI", "frozen_AI", "ICSI", "embryo_transfer_donor"], "privacyClass": "shielded" },
+              "breedingDates": { "type": "array", "items": { "type": "string", "format": "date" }, "privacyClass": "shielded" },
+              "ovulationDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+              "pregnancyCheckDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+              "pregnancyResult": { "type": "string", "enum": ["positive", "negative", "early_embryonic_loss", "twins_reduced", "not_checked"], "privacyClass": "shielded" },
+              "outcome": { "type": "string", "enum": ["live_foal", "stillborn", "abortion", "resorbed", "dystocia", "not_bred", "open"], "privacyClass": "shielded" },
+              "foalDID": { "type": "string", "description": "DID of resulting foal if on platform.", "privacyClass": "shielded" }
+            }
+          },
+          "privacyClass": "shielded"
+        },
+        "foalingHistory": {
+          "type": "array",
+          "description": "Detailed foaling records.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "foalingDate": { "type": "string", "format": "date-time", "privacyClass": "shielded" },
+              "gestationDays": { "type": "integer", "description": "Normal range 320-365 days.", "privacyClass": "shielded" },
+              "presentation": { "type": "string", "enum": ["normal_anterior", "posterior", "breech", "transverse", "dystocia_corrected", "cesarean"], "privacyClass": "shielded" },
+              "foalSex": { "type": "string", "enum": ["colt", "filly"], "privacyClass": "shielded" },
+              "foalColor": { "type": "string", "privacyClass": "shielded" },
+              "foalDID": { "type": "string", "privacyClass": "shielded" },
+              "foalRegisteredName": { "type": "string", "privacyClass": "shielded" },
+              "complications": { "type": "string", "privacyClass": "shielded" },
+              "placentaPassedHours": { "type": "number", "description": "Hours to pass placenta. >3 hours = retained placenta emergency.", "privacyClass": "shielded" },
+              "iggLevel": { "type": "number", "description": "Foal IgG level at 12-24 hours. <800 = failure of passive transfer.", "privacyClass": "shielded" }
+            }
+          },
+          "privacyClass": "shielded"
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "embryoTransfer": {
+      "type": "array",
+      "description": "Embryo transfer records. ET allows high-value mares to produce multiple foals per year.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "flushDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "donorMareDID": { "type": "string", "privacyClass": "shielded" },
+          "stallionDID": { "type": "string", "privacyClass": "shielded" },
+          "recipientMareDID": { "type": "string", "description": "Surrogate mare.", "privacyClass": "shielded" },
+          "embryoRecovered": { "type": "boolean", "privacyClass": "shielded" },
+          "embryoGrade": { "type": "string", "enum": ["excellent", "good", "fair", "poor", "degenerate"], "privacyClass": "shielded" },
+          "transferred": { "type": "boolean", "privacyClass": "shielded" },
+          "frozen": { "type": "boolean", "description": "Embryo frozen for later transfer.", "privacyClass": "shielded" },
+          "pregnancyConfirmed": { "type": "boolean", "privacyClass": "shielded" },
+          "facilityDID": { "type": "string", "privacyClass": "shielded" },
+          "outcome": { "type": "string", "enum": ["live_foal", "pregnancy_loss", "transfer_failed", "pending"], "privacyClass": "shielded" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "offspring": {
+      "type": "array",
+      "description": "All registered offspring. Critical for breeding value assessment and lineage provenance.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "offspringDID": { "type": "string", "privacyClass": "shielded" },
+          "registeredName": { "type": "string", "privacyClass": "shielded" },
+          "sex": { "type": "string", "privacyClass": "shielded" },
+          "yearFoaled": { "type": "integer", "privacyClass": "shielded" },
+          "otherParentDID": { "type": "string", "description": "DID of sire (if this is dam) or dam (if this is sire).", "privacyClass": "shielded" },
+          "otherParentName": { "type": "string", "privacyClass": "shielded" },
+          "registrationNumber": { "type": "string", "privacyClass": "shielded" },
+          "salePrice": { "type": "number", "description": "Sale price of offspring if sold.", "privacyClass": "restricted" },
+          "competitionEarnings": { "type": "number", "privacyClass": "restricted" },
+          "highestTitle": { "type": "string", "examples": ["Champion", "Reserve Champion", "G1 Winner", "Olympic Team"], "privacyClass": "shielded" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "geneticPanels": {
+      "type": "array",
+      "description": "Genetic disease and trait testing — required by many registries before breeding.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "testDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "lab": { "type": "string", "privacyClass": "shielded" },
+          "panelName": { "type": "string", "examples": ["AQHA 5-panel", "APHA required panel", "Warmblood panel", "Jockey Club parentage"], "privacyClass": "shielded" },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "marker": { "type": "string", "examples": ["HYPP", "HERDA", "GBED", "PSSM1", "MH", "LWOS/OLWS", "WFFS", "CA", "LFS", "SCA", "JEB", "MCOA", "ERU susceptibility"], "privacyClass": "shielded" },
+                "result": { "type": "string", "enum": ["N/N", "N/H", "H/H", "N/O", "O/O"], "privacyClass": "shielded" },
+                "interpretation": { "type": "string", "enum": ["negative", "carrier", "affected"], "privacyClass": "shielded" }
+              }
+            },
+            "privacyClass": "shielded"
+          },
+          "parentageVerified": { "type": "boolean", "privacyClass": "shielded" },
+          "certificateHash": { "type": "string", "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "shielded"
+    }
+  }
+}

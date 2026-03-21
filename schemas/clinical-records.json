@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equineprodata.io/schemas/clinical-records.json",
+  "title": "EquineProData — Clinical Records (SOAP Format + Equine-Specific Exams)",
+  "description": "Veterinary clinical encounter records using SOAP format with equine-specific extensions: lameness exams (AAEP grading), pre-purchase examinations, colic workups, reproductive exams, and sport horse performance evaluations. Designed for equine practitioners who think in body systems and lameness grades.",
+  "type": "object",
+  "required": ["horseDID", "recordType", "encounter"],
+  "properties": {
+
+    "horseDID": { "type": "string", "privacyClass": "public" },
+    "recordId": { "type": "string", "privacyClass": "public" },
+
+    "recordType": {
+      "type": "string",
+      "enum": [
+        "wellness_exam", "sick_visit", "emergency_colic", "emergency_trauma", "emergency_other",
+        "lameness_exam", "pre_purchase_exam", "surgery", "dental_float",
+        "reproductive_exam", "foaling", "post_foaling",
+        "vaccination_visit", "coggins_draw", "recheck",
+        "referral_consult", "ophthalmology", "internal_medicine",
+        "sport_horse_eval", "insurance_exam", "export_exam",
+        "euthanasia", "necropsy",
+        "chiropractic", "acupuncture", "shockwave", "cold_laser", "PRP_stem_cell",
+        "lab_only", "imaging_only", "prescription_refill"
+      ],
+      "privacyClass": "shielded"
+    },
+
+    "encounter": {
+      "type": "object",
+      "required": ["date", "providerDID"],
+      "properties": {
+        "date": { "type": "string", "format": "date-time", "privacyClass": "shielded" },
+        "providerDID": { "type": "string", "privacyClass": "shielded" },
+        "providerName": { "type": "string", "privacyClass": "shielded" },
+        "providerCredentials": { "type": "string", "examples": ["DVM", "DVM, DACVS", "DVM, DACVIM", "DVM, DACVSMR"], "privacyClass": "shielded" },
+        "facilityDID": { "type": "string", "privacyClass": "shielded" },
+        "facilityName": { "type": "string", "privacyClass": "shielded" },
+        "location": { "type": "string", "description": "Ambulatory equine vets often work at the barn, not a clinic.", "enum": ["clinic", "barn_call", "farm_call", "show_grounds", "racetrack", "hospital", "field"], "privacyClass": "shielded" },
+        "reasonForVisit": { "type": "string", "examples": ["Acute colic — rolling, pawing, no gut sounds", "RH lameness, 3 weeks duration", "Annual wellness and vaccines", "Pre-purchase exam for buyer"], "privacyClass": "shielded" }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "soap": {
+      "type": "object",
+      "properties": {
+        "subjective": {
+          "type": "object",
+          "properties": {
+            "chiefComplaint": { "type": "string", "privacyClass": "shielded" },
+            "historyOfPresentIllness": { "type": "string", "privacyClass": "shielded" },
+            "durationDays": { "type": "number", "privacyClass": "shielded" },
+            "appetite": { "type": "string", "enum": ["normal", "decreased", "off_feed", "eating_but_picky", "unknown"], "privacyClass": "shielded" },
+            "waterIntake": { "type": "string", "enum": ["normal", "decreased", "increased", "refusing", "unknown"], "privacyClass": "shielded" },
+            "manure": { "type": "string", "enum": ["normal", "loose", "dry_hard", "diarrhea", "no_output", "scant", "unknown"], "privacyClass": "shielded" },
+            "attitude": { "type": "string", "enum": ["bright_alert", "quiet", "depressed", "anxious", "colicky", "aggressive", "unknown"], "privacyClass": "shielded" },
+            "exercise": { "type": "string", "description": "Recent exercise or work history relevant to complaint.", "privacyClass": "shielded" },
+            "recentChanges": { "type": "string", "description": "Feed changes, turnout changes, new barn, travel, farrier work, etc.", "privacyClass": "shielded" },
+            "ownerNotes": { "type": "string", "privacyClass": "shielded" }
+          },
+          "privacyClass": "shielded"
+        },
+        "objective": {
+          "type": "object",
+          "properties": {
+            "vitals": {
+              "type": "object",
+              "description": "TPR and basic parameters. Normal adult horse: T 99-101.5F, HR 28-44, RR 8-16.",
+              "properties": {
+                "temperatureF": { "type": "number", "privacyClass": "shielded" },
+                "heartRateBPM": { "type": "integer", "privacyClass": "shielded" },
+                "respiratoryRateBPM": { "type": "integer", "privacyClass": "shielded" },
+                "weightKg": { "type": "number", "privacyClass": "shielded" },
+                "bodyConditionScore": { "type": "integer", "minimum": 1, "maximum": 9, "description": "Henneke scale.", "privacyClass": "shielded" },
+                "capillaryRefillSec": { "type": "number", "privacyClass": "shielded" },
+                "mucousMembranes": { "type": "string", "enum": ["pink_moist", "pale", "tacky", "cyanotic", "toxic_line", "icteric", "injected", "brick_red"], "privacyClass": "shielded" },
+                "digitalPulse": { "type": "string", "description": "Strength of digital pulse — critical for laminitis assessment.", "enum": ["normal", "mildly_increased", "bounding", "not_assessed"], "privacyClass": "shielded" },
+                "gutSounds": {
+                  "type": "object",
+                  "description": "Auscultation of all four quadrants. Absence = concern for colic.",
+                  "properties": {
+                    "rightDorsal": { "type": "string", "enum": ["normal", "increased", "decreased", "absent"], "privacyClass": "shielded" },
+                    "rightVentral": { "type": "string", "enum": ["normal", "increased", "decreased", "absent"], "privacyClass": "shielded" },
+                    "leftDorsal": { "type": "string", "enum": ["normal", "increased", "decreased", "absent"], "privacyClass": "shielded" },
+                    "leftVentral": { "type": "string", "enum": ["normal", "increased", "decreased", "absent"], "privacyClass": "shielded" }
+                  },
+                  "privacyClass": "shielded"
+                },
+                "painScore": { "type": "integer", "minimum": 0, "maximum": 10, "privacyClass": "shielded" },
+                "hydrationStatus": { "type": "string", "enum": ["normal", "mildly_dehydrated", "moderately_dehydrated", "severely_dehydrated"], "privacyClass": "shielded" }
+              },
+              "privacyClass": "shielded"
+            },
+            "physicalExam": {
+              "type": "object",
+              "properties": {
+                "general": { "type": "string", "privacyClass": "shielded" },
+                "eyes": { "type": "string", "privacyClass": "shielded" },
+                "ears": { "type": "string", "privacyClass": "shielded" },
+                "noseThroat": { "type": "string", "description": "Nares, discharge, guttural pouch area, lymph nodes.", "privacyClass": "shielded" },
+                "oralCavity": { "type": "string", "description": "Incisors, molars, hooks, ramps, wave mouth, EOTRH.", "privacyClass": "shielded" },
+                "cardiovascular": { "type": "string", "description": "Heart sounds, murmur grade, rhythm, jugular fill.", "privacyClass": "shielded" },
+                "respiratory": { "type": "string", "description": "Lung sounds, rebreathing exam, heaves line.", "privacyClass": "shielded" },
+                "abdominal": { "type": "string", "description": "External palpation, flanks, ventral edema.", "privacyClass": "shielded" },
+                "rectalExam": { "type": "string", "description": "Findings from rectal palpation (colic workups, repro exams).", "privacyClass": "shielded" },
+                "musculoskeletal": { "type": "string", "description": "Back, pelvis, limbs, hooves, joint effusion.", "privacyClass": "shielded" },
+                "neurological": { "type": "string", "description": "Mentation, cranial nerves, gait ataxia grading, sway test.", "privacyClass": "shielded" },
+                "integument": { "type": "string", "description": "Skin, coat, wounds, rain rot, scratches, sarcoids, melanomas.", "privacyClass": "shielded" },
+                "hooves": { "type": "string", "description": "Hoof wall, sole, frog, digital pulse, hoof testers.", "privacyClass": "shielded" },
+                "reproductive": { "type": "string", "description": "Udder, vulva, testicles, sheath. Transrectal ultrasound findings.", "privacyClass": "shielded" }
+              },
+              "privacyClass": "shielded"
+            }
+          },
+          "privacyClass": "shielded"
+        },
+        "assessment": {
+          "type": "object",
+          "properties": {
+            "diagnoses": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "diagnosis": { "type": "string", "examples": ["Large colon impaction", "Suspensory branch desmitis RH", "Squamous cell carcinoma, left eye", "Equine metabolic syndrome", "Navicular syndrome LF"], "privacyClass": "shielded" },
+                  "severity": { "type": "string", "enum": ["mild", "moderate", "severe", "critical", "chronic_stable", "chronic_progressive"], "privacyClass": "shielded" },
+                  "isNew": { "type": "boolean", "privacyClass": "shielded" }
+                }
+              },
+              "privacyClass": "shielded"
+            },
+            "differentials": { "type": "array", "items": { "type": "string" }, "privacyClass": "shielded" },
+            "prognosis": { "type": "string", "enum": ["excellent", "good", "fair", "guarded", "poor", "grave"], "privacyClass": "shielded" },
+            "prognosisForAthletics": { "type": "string", "description": "Prognosis for return to intended use/sport — often different from life prognosis.", "enum": ["full_return_expected", "return_at_lower_level", "uncertain", "unlikely", "career_ending"], "privacyClass": "shielded" },
+            "clinicianNotes": { "type": "string", "privacyClass": "shielded" }
+          },
+          "privacyClass": "shielded"
+        },
+        "plan": {
+          "type": "object",
+          "properties": {
+            "treatmentsPerformed": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "treatment": { "type": "string", "examples": ["Nasogastric intubation — 8L water + mineral oil", "Joint injection — HA + triamcinolone RH hock", "IV fluids — LRS 10L/hr x 2hrs", "Sedation — detomidine + butorphanol IV"], "privacyClass": "shielded" },
+                  "bodyRegion": { "type": "string", "privacyClass": "shielded" }
+                }
+              },
+              "privacyClass": "shielded"
+            },
+            "diagnosticsOrdered": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "testName": { "type": "string", "examples": ["CBC/Fibrinogen", "SAA (Serum Amyloid A)", "Abdominocentesis", "Digital radiographs (4-view navicular)", "Ultrasound — SDFT/DDFT/suspensory", "Nuclear scintigraphy", "MRI standing limb", "Gastroscopy", "Coggins (EIA)"], "privacyClass": "shielded" },
+                  "labName": { "type": "string", "privacyClass": "shielded" },
+                  "status": { "type": "string", "enum": ["ordered", "pending", "completed", "cancelled"], "privacyClass": "shielded" },
+                  "resultSummary": { "type": "string", "privacyClass": "shielded" }
+                }
+              },
+              "privacyClass": "shielded"
+            },
+            "prescriptions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "drugName": { "type": "string", "examples": ["Banamine (flunixin)", "Bute (phenylbutazone)", "Equioxx (firocoxib)", "GastroGard (omeprazole)", "SMZs (sulfamethoxazole/trimethoprim)", "Excede (ceftiofur)", "Regu-Mate (altrenogest)", "Adequan (PSGAG)", "Legend (HA IV)"], "privacyClass": "shielded" },
+                  "doseMg": { "type": "number", "privacyClass": "shielded" },
+                  "doseMgPerKg": { "type": "number", "description": "Dose per kg body weight.", "privacyClass": "shielded" },
+                  "route": { "type": "string", "enum": ["oral", "IV", "IM", "SQ", "topical", "ophthalmic", "intra_articular", "intrasynovial", "intralesional", "per_rectum", "intragastric_via_NGT", "inhaled"], "privacyClass": "shielded" },
+                  "frequency": { "type": "string", "examples": ["BID", "SID", "q12h", "q24h", "q48h", "PRN", "once"], "privacyClass": "shielded" },
+                  "durationDays": { "type": "integer", "privacyClass": "shielded" },
+                  "isControlledSubstance": { "type": "boolean", "privacyClass": "shielded" },
+                  "competitionWithdrawalDays": { "type": "integer", "description": "USEF/FEI drug withdrawal period in days. CRITICAL for competition horses.", "privacyClass": "shielded" },
+                  "withdrawalRuleBody": { "type": "string", "description": "Which governing body's withdrawal rules apply.", "examples": ["USEF", "FEI", "AQHA", "State Racing Commission"], "privacyClass": "shielded" }
+                }
+              },
+              "privacyClass": "shielded"
+            },
+            "followUp": {
+              "type": "object",
+              "properties": {
+                "recheckDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+                "recheckInstructions": { "type": "string", "privacyClass": "shielded" },
+                "referralTo": { "type": "string", "privacyClass": "shielded" },
+                "stallRest": { "type": "boolean", "privacyClass": "shielded" },
+                "stallRestDays": { "type": "integer", "privacyClass": "shielded" },
+                "handWalkingProtocol": { "type": "string", "examples": ["10 min hand walking BID x 2 weeks, then 15 min x 2 weeks"], "privacyClass": "shielded" },
+                "turnoutRestrictions": { "type": "string", "examples": ["Small paddock only — no pasture turnout", "Dry lot only, muzzle for any grass"], "privacyClass": "shielded" },
+                "ridingRestrictions": { "type": "string", "examples": ["No riding 30 days", "Walk only under saddle 4 weeks", "Light flatwork only, no jumping"], "privacyClass": "shielded" },
+                "dietaryChanges": { "type": "string", "examples": ["Soak hay 60 min before feeding", "No grain — hay only", "Add electrolytes to water"], "privacyClass": "shielded" }
+              },
+              "privacyClass": "shielded"
+            }
+          },
+          "privacyClass": "shielded"
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "lamenessExam": {
+      "type": "object",
+      "description": "AAEP lameness examination. Equine-specific — this doesn't exist in pet medicine.",
+      "properties": {
+        "lamenessGrade": { "type": "integer", "minimum": 0, "maximum": 5, "description": "AAEP lameness scale: 0=sound, 1=difficult to observe, 2=consistent at trot, 3=consistent at walk, 4=obvious head bob, 5=non-weight-bearing.", "privacyClass": "shielded" },
+        "affectedLimb": { "type": "string", "enum": ["LF", "RF", "LH", "RH", "bilateral_front", "bilateral_hind", "multiple", "shifting"], "privacyClass": "shielded" },
+        "straightLine": { "type": "string", "description": "Findings on straight line trot.", "privacyClass": "shielded" },
+        "lunging": { "type": "object", "properties": { "left": { "type": "string", "privacyClass": "shielded" }, "right": { "type": "string", "privacyClass": "shielded" } }, "privacyClass": "shielded" },
+        "flexionTests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "joint": { "type": "string", "examples": ["Distal limb LF", "Hock RH", "Stifle LH", "Upper limb RF"], "privacyClass": "shielded" },
+              "response": { "type": "string", "enum": ["negative", "mildly_positive", "moderately_positive", "strongly_positive"], "privacyClass": "shielded" }
+            }
+          },
+          "privacyClass": "shielded"
+        },
+        "hoofTesters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "limb": { "type": "string", "privacyClass": "shielded" },
+              "region": { "type": "string", "examples": ["Toe", "Quarters", "Heels", "Frog", "Central sulcus"], "privacyClass": "shielded" },
+              "response": { "type": "string", "enum": ["negative", "mild", "moderate", "marked"], "privacyClass": "shielded" }
+            }
+          },
+          "privacyClass": "shielded"
+        },
+        "nerveBlocks": {
+          "type": "array",
+          "description": "Diagnostic nerve/joint blocks to localize pain source.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "blockType": { "type": "string", "examples": ["PD nerve block", "Abaxial sesamoid", "Low 4-point", "High 4-point", "Coffin joint", "Navicular bursa", "Fetlock joint", "Hock (TM/DIT)", "Stifle"], "privacyClass": "shielded" },
+              "limb": { "type": "string", "privacyClass": "shielded" },
+              "percentImprovement": { "type": "integer", "description": "Estimated % improvement in lameness after block.", "privacyClass": "shielded" },
+              "agent": { "type": "string", "examples": ["Mepivacaine 2%", "Lidocaine 2%"], "privacyClass": "shielded" }
+            }
+          },
+          "privacyClass": "shielded"
+        },
+        "conclusion": { "type": "string", "description": "Lameness localization and diagnosis.", "privacyClass": "shielded" }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "prePurchaseExam": {
+      "type": "object",
+      "description": "PPE — Pre-Purchase Examination. One of the highest-stakes equine exams. Results often determine whether a sale proceeds.",
+      "properties": {
+        "examLevel": { "type": "string", "enum": ["basic", "standard_5_stage", "comprehensive_with_imaging", "full_with_blood_draw", "insurance_level"], "privacyClass": "shielded" },
+        "requestedByDID": { "type": "string", "description": "Buyer who requested the PPE.", "privacyClass": "restricted" },
+        "intendedUse": { "type": "string", "examples": ["Dressage — Grand Prix level", "Hunter/Jumper — 3'6\" amateur", "Trail riding — pleasure", "Breeding stallion", "Racing"], "privacyClass": "shielded" },
+        "findingsSummary": { "type": "string", "privacyClass": "shielded" },
+        "radiographsTaken": { "type": "array", "items": { "type": "string", "examples": ["Front feet (4-view)", "Hocks (4-view)", "Stifles (3-view)", "Cervical spine"] }, "privacyClass": "shielded" },
+        "radiographicFindings": { "type": "string", "privacyClass": "shielded" },
+        "bloodDrawn": { "type": "boolean", "description": "Blood sample drawn and held for future drug testing.", "privacyClass": "shielded" },
+        "bloodHeldUntil": { "type": "string", "format": "date", "privacyClass": "shielded" },
+        "veterinarianOpinion": { "type": "string", "description": "Vet's opinion on suitability for intended use. PPEs are opinions, not pass/fail.", "privacyClass": "shielded" },
+        "reportHash": { "type": "string", "description": "Hash of the full PPE report document.", "privacyClass": "public" }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "billing": {
+      "type": "object",
+      "properties": {
+        "lineItems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string", "privacyClass": "restricted" },
+              "quantity": { "type": "number", "privacyClass": "restricted" },
+              "unitPrice": { "type": "number", "privacyClass": "restricted" },
+              "totalPrice": { "type": "number", "privacyClass": "restricted" },
+              "category": { "type": "string", "enum": ["exam", "diagnostic", "treatment", "surgery", "medication", "hospitalization", "anesthesia", "imaging", "dental", "farrier", "reproduction", "supplies", "farm_call_fee", "mileage", "after_hours_fee", "other"], "privacyClass": "restricted" }
+            }
+          },
+          "privacyClass": "restricted"
+        },
+        "totalCharged": { "type": "number", "privacyClass": "restricted" },
+        "currency": { "type": "string", "default": "USD", "privacyClass": "restricted" },
+        "invoiceHash": { "type": "string", "privacyClass": "public" },
+        "insuranceClaimId": { "type": "string", "privacyClass": "restricted" },
+        "paymentStatus": { "type": "string", "enum": ["paid", "pending", "partial", "insurance_submitted", "collections", "waived"], "privacyClass": "restricted" }
+      },
+      "privacyClass": "restricted"
+    },
+
+    "recordIntegrity": {
+      "type": "object",
+      "properties": {
+        "recordHash": { "type": "string", "privacyClass": "public" },
+        "transactionHash": { "type": "string", "privacyClass": "public" },
+        "anchoredAt": { "type": "string", "format": "date-time", "privacyClass": "public" },
+        "lastModified": { "type": "string", "format": "date-time", "privacyClass": "public" },
+        "modificationCount": { "type": "integer", "privacyClass": "public" }
+      },
+      "privacyClass": "public"
+    }
+  }
+}

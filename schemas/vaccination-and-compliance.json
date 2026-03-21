@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equineprodata.io/schemas/vaccination-and-compliance.json",
+  "title": "EquineProData — Vaccination, Coggins, Health Certificates & Drug Compliance",
+  "description": "Vaccination history, EIA (Coggins) testing, health certificates for interstate transport, quarantine records, deworming, and competition drug withdrawal tracking. Equine vaccination and compliance requirements are far more complex than companion animals due to travel, competition, breeding, and biosecurity demands.",
+  "type": "object",
+  "required": ["horseDID"],
+  "properties": {
+
+    "horseDID": { "type": "string", "privacyClass": "public" },
+
+    "vaccinations": {
+      "type": "array",
+      "description": "Complete vaccination history. AAEP core vaccines: Tetanus, EEE/WEE, West Nile, Rabies. Risk-based: Influenza, Rhinopneumonitis (EHV-1/4), Strangles, Botulism, Potomac Horse Fever, Rotavirus.",
+      "items": {
+        "type": "object",
+        "required": ["vaccineName", "dateAdministered", "providerDID"],
+        "properties": {
+          "vaccineName": { "type": "string", "examples": ["Tetanus Toxoid", "EEE/WEE/Tetanus/WNV (Vetera Gold)", "Influenza/Rhino (Fluvac Innovator EHV-4/1)", "Rabies (Imrab 3)", "Strangles (Pinnacle IN)", "PHF (Potomac Horse Fever)", "Botulism Type B", "Rotavirus (EquiLink-R)"], "privacyClass": "shielded" },
+          "vaccineType": { "type": "string", "enum": ["core", "risk_based"], "privacyClass": "public" },
+          "targetDisease": { "type": "array", "items": { "type": "string" }, "privacyClass": "public" },
+          "manufacturer": { "type": "string", "privacyClass": "shielded" },
+          "lotNumber": { "type": "string", "privacyClass": "shielded" },
+          "expirationDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "dateAdministered": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "dueDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "route": { "type": "string", "enum": ["intramuscular", "intranasal", "oral"], "privacyClass": "shielded" },
+          "injectionSite": { "type": "string", "examples": ["Left pectoral", "Right pectoral", "Left neck", "Right neck"], "privacyClass": "shielded" },
+          "providerDID": { "type": "string", "privacyClass": "shielded" },
+          "providerName": { "type": "string", "privacyClass": "shielded" },
+          "adverseReaction": {
+            "type": "object",
+            "properties": {
+              "occurred": { "type": "boolean", "privacyClass": "emergency" },
+              "reactionType": { "type": "string", "enum": ["none", "mild_local_swelling", "moderate_stiffness", "fever", "severe_anaphylaxis", "purpura_hemorrhagica", "abscess"], "privacyClass": "emergency" },
+              "description": { "type": "string", "privacyClass": "shielded" }
+            },
+            "privacyClass": "emergency"
+          },
+          "complianceStatus": { "type": "string", "enum": ["current", "overdue", "expired", "exempt_medical"], "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "coggins": {
+      "type": "array",
+      "description": "EIA (Equine Infectious Anemia) test — the 'Coggins test.' Required by law for interstate transport, boarding at most facilities, showing, racing, and breeding in virtually every US state. Usually valid for 12 months.",
+      "items": {
+        "type": "object",
+        "required": ["testDate", "result", "veterinarianDID", "labName"],
+        "properties": {
+          "testDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "result": { "type": "string", "enum": ["negative", "positive"], "description": "A positive Coggins is a life-altering event — permanent quarantine or euthanasia in most jurisdictions.", "privacyClass": "shielded" },
+          "testType": { "type": "string", "enum": ["AGID (standard)", "ELISA (rapid)"], "privacyClass": "shielded" },
+          "labName": { "type": "string", "privacyClass": "shielded" },
+          "labAccessionNumber": { "type": "string", "privacyClass": "shielded" },
+          "veterinarianDID": { "type": "string", "privacyClass": "shielded" },
+          "veterinarianName": { "type": "string", "privacyClass": "shielded" },
+          "expirationDate": { "type": "string", "format": "date", "description": "Typically 12 months from test date.", "privacyClass": "shielded" },
+          "certificateNumber": { "type": "string", "privacyClass": "shielded" },
+          "certificateHash": { "type": "string", "description": "Hash of the official Coggins certificate.", "privacyClass": "public" },
+          "complianceStatus": { "type": "string", "enum": ["current", "expiring_soon", "expired"], "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "healthCertificates": {
+      "type": "array",
+      "description": "Certificate of Veterinary Inspection (CVI) — required for interstate and international movement. Also called 'health papers.'",
+      "items": {
+        "type": "object",
+        "properties": {
+          "certificateType": { "type": "string", "enum": ["interstate_CVI", "international_export", "international_import", "show_grounds_entry", "breeding_facility_entry"], "privacyClass": "shielded" },
+          "issueDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "expirationDate": { "type": "string", "format": "date", "description": "Typically 30 days for interstate, varies for international.", "privacyClass": "shielded" },
+          "originState": { "type": "string", "privacyClass": "shielded" },
+          "destinationState": { "type": "string", "privacyClass": "shielded" },
+          "veterinarianDID": { "type": "string", "privacyClass": "shielded" },
+          "usda_endorsement": { "type": "boolean", "description": "Whether USDA/APHIS endorsement was obtained (required for some states and all international).", "privacyClass": "shielded" },
+          "testsRequired": { "type": "array", "items": { "type": "string", "examples": ["Coggins (EIA)", "EHV-1 PCR", "EVA titer", "Piroplasmosis", "Dourine", "Glanders"] }, "privacyClass": "shielded" },
+          "certificateNumber": { "type": "string", "privacyClass": "shielded" },
+          "certificateHash": { "type": "string", "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "quarantine": {
+      "type": "array",
+      "description": "Quarantine periods — required after certain disease exposures, import, or facility outbreaks.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reason": { "type": "string", "examples": ["EHV-1 exposure at show", "New arrival isolation", "Strangles outbreak at facility", "International import quarantine", "Suspected EIA contact"], "privacyClass": "shielded" },
+          "startDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "endDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "releaseTestRequired": { "type": "string", "description": "Test needed before release from quarantine.", "privacyClass": "shielded" },
+          "releaseTestResult": { "type": "string", "enum": ["pending", "negative", "positive", "not_required"], "privacyClass": "shielded" },
+          "facilityDID": { "type": "string", "privacyClass": "shielded" },
+          "status": { "type": "string", "enum": ["active", "released", "extended"], "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "deworming": {
+      "type": "array",
+      "description": "Deworming history. Modern equine practice emphasizes targeted deworming based on fecal egg counts rather than rotational deworming.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "product": { "type": "string", "examples": ["Ivermectin (Zimecterin)", "Moxidectin (Quest Plus)", "Fenbendazole (Panacur/Safe-Guard)", "Pyrantel (Strongid)", "Praziquantel/Ivermectin (Equimax)"], "privacyClass": "shielded" },
+          "activeIngredient": { "type": "string", "privacyClass": "shielded" },
+          "fecalEggCountPre": { "type": "integer", "description": "EPG (eggs per gram) before deworming.", "privacyClass": "shielded" },
+          "fecalEggCountPost": { "type": "integer", "description": "EPG 10-14 days after deworming (FECRT).", "privacyClass": "shielded" },
+          "shedderClassification": { "type": "string", "enum": ["low_shedder", "moderate_shedder", "high_shedder", "not_classified"], "description": "Based on FEC: low <200, moderate 200-500, high >500 EPG.", "privacyClass": "shielded" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "competitionDrugCompliance": {
+      "type": "object",
+      "description": "Drug withdrawal and testing compliance for competition horses. This is a major regulatory area — violations can result in fines, suspensions, loss of winnings, and career damage.",
+      "properties": {
+        "governingBodies": { "type": "array", "items": { "type": "string", "examples": ["USEF", "FEI", "AQHA", "State Racing Commission"] }, "privacyClass": "public" },
+        "activeWithdrawals": {
+          "type": "array",
+          "description": "Drugs currently within their withdrawal period — horse is NOT eligible to compete.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "drugName": { "type": "string", "privacyClass": "shielded" },
+              "administeredDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+              "withdrawalDays": { "type": "integer", "privacyClass": "shielded" },
+              "clearDate": { "type": "string", "format": "date", "description": "Date the horse becomes eligible to compete.", "privacyClass": "shielded" },
+              "ruleBody": { "type": "string", "privacyClass": "shielded" }
+            }
+          },
+          "privacyClass": "shielded"
+        },
+        "competitionEligible": { "type": "boolean", "description": "Computed: true if no active withdrawals.", "privacyClass": "public" },
+        "drugTestHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "testDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+              "eventName": { "type": "string", "privacyClass": "shielded" },
+              "testingBody": { "type": "string", "privacyClass": "shielded" },
+              "sampleType": { "type": "string", "enum": ["urine", "blood", "both"], "privacyClass": "shielded" },
+              "result": { "type": "string", "enum": ["negative", "positive", "pending", "split_sample_requested"], "privacyClass": "shielded" },
+              "substanceDetected": { "type": "string", "privacyClass": "restricted" }
+            }
+          },
+          "privacyClass": "shielded"
+        }
+      },
+      "privacyClass": "shielded"
+    }
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equineprodata.io/schemas/transport-and-movement.json",
+  "title": "EquineProData — Transport, Movement & Hauling Records",
+  "description": "Interstate health certificates, international export/import, hauling records, quarantine, and facility movement history. Horses travel constantly — to shows, trainers, breeding farms, vet hospitals, and new homes. Every move requires documentation, and proving compliance without overexposing records is a perfect Midnight use case.",
+  "type": "object",
+  "required": ["horseDID"],
+  "properties": {
+
+    "horseDID": { "type": "string", "privacyClass": "public" },
+
+    "movementHistory": {
+      "type": "array",
+      "description": "Chronological record of every facility change. Critical for biosecurity tracing and provenance.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "moveDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "fromFacilityDID": { "type": "string", "privacyClass": "shielded" },
+          "fromFacilityName": { "type": "string", "privacyClass": "shielded" },
+          "fromState": { "type": "string", "privacyClass": "shielded" },
+          "toFacilityDID": { "type": "string", "privacyClass": "shielded" },
+          "toFacilityName": { "type": "string", "privacyClass": "shielded" },
+          "toState": { "type": "string", "privacyClass": "shielded" },
+          "moveType": { "type": "string", "enum": ["permanent_relocation", "show_temporary", "training_temporary", "breeding_temporary", "veterinary_referral", "emergency_transport", "sale_transport", "quarantine_transport", "international_export", "international_import"], "privacyClass": "shielded" },
+          "returnDate": { "type": "string", "format": "date", "description": "For temporary moves — when horse returned to home facility.", "privacyClass": "shielded" },
+          "healthCertificateId": { "type": "string", "description": "Reference to associated CVI/health certificate.", "privacyClass": "shielded" },
+          "cogginsId": { "type": "string", "description": "Reference to Coggins on file for this move.", "privacyClass": "shielded" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "haulingRecords": {
+      "type": "array",
+      "description": "Physical transport records — who hauled, what vehicle, conditions, duration.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "haulerDID": { "type": "string", "description": "DID of hauling company or individual.", "privacyClass": "shielded" },
+          "haulerName": { "type": "string", "privacyClass": "shielded" },
+          "haulerType": { "type": "string", "enum": ["commercial_carrier", "private_owner", "trainer", "facility_transport", "veterinary_ambulance"], "privacyClass": "shielded" },
+          "vehicleType": { "type": "string", "enum": ["2_horse_bumper_pull", "2_horse_gooseneck", "3_horse_slant", "4_horse_head_to_head", "stock_trailer", "commercial_van", "air_transport"], "privacyClass": "shielded" },
+          "origin": { "type": "string", "privacyClass": "shielded" },
+          "destination": { "type": "string", "privacyClass": "shielded" },
+          "distanceMiles": { "type": "number", "privacyClass": "shielded" },
+          "durationHours": { "type": "number", "privacyClass": "shielded" },
+          "restStops": { "type": "integer", "description": "Number of rest/water stops.", "privacyClass": "shielded" },
+          "temperatureRange": { "type": "string", "description": "Ambient temperature range during transport.", "privacyClass": "shielded" },
+          "incidentNotes": { "type": "string", "description": "Any incidents: scrambling, kicking, injury, refusal to load.", "privacyClass": "shielded" },
+          "loadingBehavior": { "type": "string", "enum": ["loads_easily", "needs_encouragement", "difficult_loader", "requires_sedation", "self_loads"], "privacyClass": "shielded" },
+          "specialRequirements": {
+            "type": "array",
+            "description": "Transport needs specific to this horse.",
+            "items": { "type": "string", "examples": ["Must face backward", "Needs divider removed", "Must travel alone", "Requires hay net", "Leg wraps required", "Head bumper required", "Sedation for long trips"] },
+            "privacyClass": "shielded"
+          },
+          "cost": { "type": "number", "privacyClass": "restricted" },
+          "insuranceDuringTransit": { "type": "boolean", "description": "Whether transit insurance was in effect.", "privacyClass": "shielded" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "internationalMovement": {
+      "type": "array",
+      "description": "International export and import records — these involve USDA/APHIS, foreign government requirements, and quarantine.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "direction": { "type": "string", "enum": ["export", "import", "temporary_export_competition", "temporary_import_competition"], "privacyClass": "shielded" },
+          "originCountry": { "type": "string", "privacyClass": "shielded" },
+          "destinationCountry": { "type": "string", "privacyClass": "shielded" },
+          "departureDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "arrivalDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "transportMethod": { "type": "string", "enum": ["air_cargo", "ocean_vessel", "ground_cross_border"], "privacyClass": "shielded" },
+          "quarantineFacilityDID": { "type": "string", "privacyClass": "shielded" },
+          "quarantineDays": { "type": "integer", "privacyClass": "shielded" },
+          "requiredTests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "testName": { "type": "string", "examples": ["Coggins (EIA)", "EVA titer", "Piroplasmosis (cELISA + CFT)", "Dourine (CFT)", "Glanders (CFT)", "CEM culture", "EHV-1 PCR"], "privacyClass": "shielded" },
+                "result": { "type": "string", "enum": ["negative", "positive", "pending"], "privacyClass": "shielded" },
+                "testDate": { "type": "string", "format": "date", "privacyClass": "shielded" }
+              }
+            },
+            "privacyClass": "shielded"
+          },
+          "exportCertificateNumber": { "type": "string", "privacyClass": "shielded" },
+          "exportCertificateHash": { "type": "string", "privacyClass": "public" },
+          "usdaEndorsement": { "type": "boolean", "privacyClass": "shielded" },
+          "customsDeclaration": { "type": "string", "privacyClass": "restricted" },
+          "cost": { "type": "number", "description": "Total transport + quarantine + testing + customs costs.", "privacyClass": "restricted" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "biosecurityEvents": {
+      "type": "array",
+      "description": "Disease exposure events during transport or at facilities. Critical for outbreak tracing.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "eventDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "disease": { "type": "string", "examples": ["EHV-1 (neurologic)", "EHV-1 (respiratory)", "Strangles", "Influenza", "Salmonella", "EIA"], "privacyClass": "shielded" },
+          "exposureType": { "type": "string", "enum": ["confirmed_contact", "same_facility", "same_show_grounds", "same_transport", "suspected_contact"], "privacyClass": "shielded" },
+          "facilityOrEvent": { "type": "string", "privacyClass": "shielded" },
+          "quarantineResult": { "type": "string", "enum": ["quarantined_cleared", "quarantined_positive", "monitoring_only", "not_quarantined"], "privacyClass": "shielded" },
+          "testingPerformed": { "type": "array", "items": { "type": "string" }, "privacyClass": "shielded" },
+          "notifiedAuthority": { "type": "string", "description": "State vet or USDA notified.", "privacyClass": "shielded" }
+        }
+      },
+      "privacyClass": "shielded"
+    }
+  }
+}

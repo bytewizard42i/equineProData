@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equineprodata.io/schemas/hoof-farrier-and-dental.json",
+  "title": "EquineProData — Hoof, Farrier & Dental Records",
+  "description": "Shoeing cycles, corrective/therapeutic farrier work, hoof radiographs, dental floats, wolf teeth, and EOTRH tracking. These are equine-only workflows that have no equivalent in companion animal or human medicine. Farrier and dental care are recurring, expensive, and directly affect soundness and performance.",
+  "type": "object",
+  "required": ["horseDID"],
+  "properties": {
+
+    "horseDID": { "type": "string", "privacyClass": "public" },
+
+    "farrierRecords": {
+      "type": "object",
+      "properties": {
+        "currentFarrier": {
+          "type": "object",
+          "properties": {
+            "farrierDID": { "type": "string", "privacyClass": "shielded" },
+            "farrierName": { "type": "string", "privacyClass": "shielded" },
+            "certification": { "type": "string", "examples": ["AFA CJF (Certified Journeyman Farrier)", "AFA CF", "BWFA", "None — experienced apprentice-trained"], "privacyClass": "shielded" },
+            "phone": { "type": "string", "privacyClass": "shielded" },
+            "cycleWeeks": { "type": "integer", "description": "Shoeing/trim cycle in weeks. Typically 4-8 weeks.", "privacyClass": "shielded" }
+          },
+          "privacyClass": "shielded"
+        },
+        "shoeingStatus": {
+          "type": "string",
+          "description": "Current hoof care approach.",
+          "enum": ["shod_all_four", "shod_fronts_only", "barefoot_all_four", "barefoot_with_boots", "glue_on_shoes", "therapeutic_shoes", "heart_bar_shoes", "egg_bar_shoes", "pads_all_around", "pads_fronts_only"],
+          "privacyClass": "shielded"
+        },
+        "visits": {
+          "type": "array",
+          "description": "Each farrier visit is recorded — this is a recurring cost and soundness factor.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": { "type": "string", "format": "date", "privacyClass": "shielded" },
+              "farrierDID": { "type": "string", "privacyClass": "shielded" },
+              "serviceType": {
+                "type": "string",
+                "enum": ["routine_trim", "routine_reset", "new_shoes", "corrective_shoeing", "therapeutic_shoeing", "emergency_lost_shoe", "emergency_abscess", "glue_on_application", "pour_in_pad"],
+                "privacyClass": "shielded"
+              },
+              "shoeMaterial": { "type": "string", "enum": ["steel", "aluminum", "copper", "titanium", "composite", "glue_on_composite", "barefoot_trim", "other"], "privacyClass": "shielded" },
+              "modifications": {
+                "type": "array",
+                "description": "Special modifications for soundness or therapeutic purposes.",
+                "items": { "type": "string", "examples": ["Rolled toe", "Rocker toe", "Lateral extension", "Medial wedge", "Degree pad (2°)", "Leather pad", "Silicone pour-in pad", "Heart bar", "Egg bar", "Full support pad", "Natural balance trim"] },
+                "privacyClass": "shielded"
+              },
+              "hoofNotes": {
+                "type": "object",
+                "description": "Per-hoof observations.",
+                "properties": {
+                  "LF": { "type": "string", "privacyClass": "shielded" },
+                  "RF": { "type": "string", "privacyClass": "shielded" },
+                  "LH": { "type": "string", "privacyClass": "shielded" },
+                  "RH": { "type": "string", "privacyClass": "shielded" }
+                },
+                "privacyClass": "shielded"
+              },
+              "concerns": { "type": "string", "description": "Cracks, thrush, white line disease, thin soles, contracted heels, underrun heels, flare, etc.", "privacyClass": "shielded" },
+              "vetCollaboration": { "type": "boolean", "description": "Whether this visit involved vet consultation (common for therapeutic/corrective work).", "privacyClass": "shielded" },
+              "radiographsUsed": { "type": "boolean", "description": "Whether hoof radiographs guided the trim/shoeing.", "privacyClass": "shielded" },
+              "cost": { "type": "number", "privacyClass": "restricted" }
+            }
+          },
+          "privacyClass": "shielded"
+        },
+        "hoofRadiographs": {
+          "type": "array",
+          "description": "Hoof x-rays — used for laminitis monitoring, navicular assessment, corrective shoeing guidance, and pre-purchase exams.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": { "type": "string", "format": "date", "privacyClass": "shielded" },
+              "limb": { "type": "string", "enum": ["LF", "RF", "LH", "RH", "all_four"], "privacyClass": "shielded" },
+              "views": { "type": "array", "items": { "type": "string", "examples": ["Lateral", "DP (dorsopalmar)", "Navicular skyline", "65° DP"] }, "privacyClass": "shielded" },
+              "findings": { "type": "string", "examples": ["Normal palmar angle, no rotation", "3° rotation LF, sinking noted", "Navicular changes — cyst-like lesion RF"], "privacyClass": "shielded" },
+              "soleDepth": { "type": "number", "description": "Sole depth in mm — thin soles are a common problem.", "privacyClass": "shielded" },
+              "palmarAngle": { "type": "number", "description": "Palmar angle in degrees.", "privacyClass": "shielded" },
+              "rotation": { "type": "number", "description": "Coffin bone rotation in degrees (laminitis metric).", "privacyClass": "shielded" },
+              "imageHash": { "type": "string", "privacyClass": "public" },
+              "imageUri": { "type": "string", "privacyClass": "shielded" }
+            }
+          },
+          "privacyClass": "shielded"
+        },
+        "hoofConditions": {
+          "type": "array",
+          "description": "Ongoing hoof conditions being managed.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "condition": { "type": "string", "examples": ["Chronic laminitis", "Navicular syndrome", "White line disease", "Chronic thrush", "Quarter crack", "Toe crack", "Thin soles", "Contracted heels", "Underrun heels", "Keratoma", "Sidebone", "Club foot"], "privacyClass": "shielded" },
+              "affectedHoof": { "type": "string", "enum": ["LF", "RF", "LH", "RH", "bilateral_front", "bilateral_hind", "all_four"], "privacyClass": "shielded" },
+              "severity": { "type": "string", "enum": ["mild", "moderate", "severe", "resolving"], "privacyClass": "shielded" },
+              "managementPlan": { "type": "string", "privacyClass": "shielded" }
+            }
+          },
+          "privacyClass": "shielded"
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "dentalRecords": {
+      "type": "object",
+      "properties": {
+        "currentDentist": {
+          "type": "object",
+          "description": "Equine dentistry is performed by vets or licensed equine dental technicians depending on jurisdiction.",
+          "properties": {
+            "providerDID": { "type": "string", "privacyClass": "shielded" },
+            "providerName": { "type": "string", "privacyClass": "shielded" },
+            "providerType": { "type": "string", "enum": ["veterinarian", "equine_dental_technician"], "privacyClass": "shielded" },
+            "floatCycleMonths": { "type": "integer", "description": "How often dental float is recommended. Typically 6-12 months.", "privacyClass": "shielded" }
+          },
+          "privacyClass": "shielded"
+        },
+        "visits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": { "type": "string", "format": "date", "privacyClass": "shielded" },
+              "providerDID": { "type": "string", "privacyClass": "shielded" },
+              "procedureType": {
+                "type": "string",
+                "enum": ["routine_float", "corrective_float", "wolf_teeth_extraction", "incisor_reduction", "molar_extraction", "cap_removal", "oral_exam_only", "power_float", "hand_float"],
+                "privacyClass": "shielded"
+              },
+              "sedationUsed": { "type": "boolean", "privacyClass": "shielded" },
+              "sedationDrug": { "type": "string", "examples": ["Dormosedan (detomidine)", "Dormosedan + Torbugesic"], "privacyClass": "shielded" },
+              "findings": {
+                "type": "string",
+                "description": "Dental findings — hooks, ramps, wave mouth, sharp enamel points, missing teeth, EOTRH, fractures.",
+                "examples": ["Moderate hooks 106/206, sharp enamel points all arcades, floated to smooth table", "EOTRH Grade 2 — incisors, monitoring recommended", "Wolf teeth #105/#205 extracted, routine float performed"],
+                "privacyClass": "shielded"
+              },
+              "teethAffected": { "type": "array", "items": { "type": "string", "description": "Modified Triadan numbering system." }, "privacyClass": "shielded" },
+              "eotrh": {
+                "type": "object",
+                "description": "EOTRH (Equine Odontoclastic Tooth Resorption and Hypercementosis) — progressive condition in older horses.",
+                "properties": {
+                  "present": { "type": "boolean", "privacyClass": "shielded" },
+                  "grade": { "type": "string", "enum": ["Grade 1 (early)", "Grade 2 (moderate)", "Grade 3 (severe)", "Not assessed"], "privacyClass": "shielded" },
+                  "affectedTeeth": { "type": "array", "items": { "type": "string" }, "privacyClass": "shielded" },
+                  "extractionsNeeded": { "type": "boolean", "privacyClass": "shielded" }
+                },
+                "privacyClass": "shielded"
+              },
+              "nextDue": { "type": "string", "format": "date", "privacyClass": "shielded" },
+              "cost": { "type": "number", "privacyClass": "restricted" }
+            }
+          },
+          "privacyClass": "shielded"
+        }
+      },
+      "privacyClass": "shielded"
+    }
+  }
+}

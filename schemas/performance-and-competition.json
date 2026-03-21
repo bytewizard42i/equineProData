@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://equineprodata.io/schemas/performance-and-competition.json",
+  "title": "EquineProData — Performance, Competition & Show Records",
+  "description": "Show results, race records, titles, points, rankings, and discipline history. Competition records are a major component of equine RWA valuation — a horse's show record directly affects sale price, breeding value, and insurance agreed value.",
+  "type": "object",
+  "required": ["horseDID"],
+  "properties": {
+
+    "horseDID": { "type": "string", "privacyClass": "public" },
+
+    "disciplines": {
+      "type": "array",
+      "description": "All disciplines this horse has competed in, with level and status.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "discipline": { "type": "string", "examples": ["Hunter/Jumper", "Dressage", "Eventing", "Reining", "Cutting", "Barrel Racing", "Endurance", "Racing (Flat)", "Racing (Steeplechase)", "Western Pleasure", "Halter", "Trail", "Driving", "Polo", "Vaulting", "Combined Driving"], "privacyClass": "public" },
+          "currentLevel": { "type": "string", "examples": ["Intro", "Training", "Preliminary", "Intermediate", "Advanced", "Grand Prix", "1.0m", "1.20m", "1.40m", "1.60m", "Maiden", "Allowance", "Stakes", "Graded Stakes", "Novice", "Limited Open", "Open", "Non-Pro"], "privacyClass": "public" },
+          "yearsActive": { "type": "string", "examples": ["2020-present", "2018-2022"], "privacyClass": "public" },
+          "status": { "type": "string", "enum": ["active", "retired", "on_break", "retraining"], "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "public"
+    },
+
+    "titles": {
+      "type": "array",
+      "description": "Formal titles earned through competition. Titles are permanent markers of achievement and directly affect value.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "examples": ["AQHA World Champion", "USDF Gold Medal", "USEF Horse of the Year", "Eclipse Award", "FEI World Cup Qualifier", "NRHA Futurity Champion", "NCHA $100K Earner", "USHJA International Hunter Derby Champion", "Rolex/Kentucky 5* CCI Finisher"], "privacyClass": "public" },
+          "awardingBody": { "type": "string", "privacyClass": "public" },
+          "yearEarned": { "type": "integer", "privacyClass": "public" },
+          "discipline": { "type": "string", "privacyClass": "public" },
+          "certificateHash": { "type": "string", "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "public"
+    },
+
+    "points": {
+      "type": "array",
+      "description": "Accumulated points with governing bodies and breed registries.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "organization": { "type": "string", "examples": ["USEF", "USHJA", "USDF", "USEA", "AQHA", "NRHA", "NCHA", "FEI", "APHA"], "privacyClass": "public" },
+          "pointType": { "type": "string", "examples": ["USEF points", "USHJA Zone points", "USDF scores", "AQHA all-around points", "FEI ranking points", "Lifetime earnings"], "privacyClass": "public" },
+          "totalPoints": { "type": "number", "privacyClass": "public" },
+          "asOfDate": { "type": "string", "format": "date", "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "public"
+    },
+
+    "rankings": {
+      "type": "array",
+      "description": "Current and historical rankings.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "rankingBody": { "type": "string", "privacyClass": "public" },
+          "category": { "type": "string", "examples": ["FEI Jumping World Ranking", "USDF All-Breeds Award", "NRHA Standings", "Thoroughbred Racing — Beyer Speed Figures"], "privacyClass": "public" },
+          "rank": { "type": "integer", "privacyClass": "public" },
+          "region": { "type": "string", "examples": ["National", "Zone 3", "Region 1", "World"], "privacyClass": "public" },
+          "asOfDate": { "type": "string", "format": "date", "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "public"
+    },
+
+    "showResults": {
+      "type": "array",
+      "description": "Individual competition results. For show horses, eventers, dressage, western, etc.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "eventName": { "type": "string", "examples": ["Devon Horse Show", "AQHA World Show", "Rolex Kentucky 3-Day", "NRHA Futurity", "WEF Week 5"], "privacyClass": "shielded" },
+          "eventDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+          "location": { "type": "string", "privacyClass": "shielded" },
+          "sanctioningBody": { "type": "string", "privacyClass": "public" },
+          "className": { "type": "string", "examples": ["$25,000 Grand Prix", "First Level Test 3", "Open Reining", "Green Hunter 3'6\"", "Training Level Horse Trials"], "privacyClass": "shielded" },
+          "placing": { "type": "string", "examples": ["1st", "2nd", "3rd", "4th", "Top 10", "Completed", "Eliminated", "Retired", "Withdrawn"], "privacyClass": "shielded" },
+          "entries": { "type": "integer", "description": "Number of entries in the class.", "privacyClass": "shielded" },
+          "score": { "type": "number", "description": "Numeric score if applicable (dressage %, reining score, jump faults, cross-country penalties).", "privacyClass": "shielded" },
+          "prizeMoney": { "type": "number", "privacyClass": "restricted" },
+          "riderDID": { "type": "string", "privacyClass": "shielded" },
+          "riderName": { "type": "string", "privacyClass": "shielded" },
+          "trainerDID": { "type": "string", "privacyClass": "shielded" },
+          "notes": { "type": "string", "privacyClass": "shielded" }
+        }
+      },
+      "privacyClass": "shielded"
+    },
+
+    "raceResults": {
+      "type": "array",
+      "description": "Thoroughbred/Quarter Horse/Standardbred race results. Racing data is typically more public than show data.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "raceName": { "type": "string", "examples": ["Kentucky Derby (G1)", "Breeders' Cup Classic", "All American Futurity", "Hambletonian Stakes"], "privacyClass": "public" },
+          "raceDate": { "type": "string", "format": "date", "privacyClass": "public" },
+          "trackName": { "type": "string", "examples": ["Churchill Downs", "Saratoga", "Del Mar", "Keeneland", "Ruidoso Downs"], "privacyClass": "public" },
+          "surface": { "type": "string", "enum": ["dirt", "turf", "synthetic", "all_weather"], "privacyClass": "public" },
+          "distance": { "type": "string", "examples": ["6 furlongs", "1 mile", "1 1/4 miles", "440 yards", "870 yards"], "privacyClass": "public" },
+          "raceType": { "type": "string", "enum": ["maiden", "maiden_claiming", "claiming", "allowance", "allowance_optional_claiming", "starter_allowance", "stakes", "listed_stakes", "graded_stakes_III", "graded_stakes_II", "graded_stakes_I"], "privacyClass": "public" },
+          "finish": { "type": "integer", "description": "Finishing position.", "privacyClass": "public" },
+          "fieldSize": { "type": "integer", "privacyClass": "public" },
+          "margins": { "type": "string", "examples": ["Won by 2 1/4 lengths", "3rd, beaten 5 lengths"], "privacyClass": "public" },
+          "time": { "type": "string", "examples": ["1:09.45", "2:01.32"], "privacyClass": "public" },
+          "speedFigure": { "type": "integer", "description": "Beyer, Ragozin, Thoro-Graph, or TimeformUS figure.", "privacyClass": "public" },
+          "purse": { "type": "number", "privacyClass": "public" },
+          "earningsThisRace": { "type": "number", "privacyClass": "restricted" },
+          "jockeyName": { "type": "string", "privacyClass": "public" },
+          "trainerName": { "type": "string", "privacyClass": "public" },
+          "weight": { "type": "integer", "description": "Weight carried in pounds.", "privacyClass": "public" },
+          "equipment": { "type": "string", "examples": ["Blinkers", "Blinkers off", "Lasix", "First-time Lasix"], "privacyClass": "public" },
+          "comments": { "type": "string", "description": "Running line comments.", "examples": ["Stalked pace, rallied in stretch", "Broke slow, wide on turn"], "privacyClass": "public" }
+        }
+      },
+      "privacyClass": "public"
+    },
+
+    "trainingLog": {
+      "type": "object",
+      "description": "Training history — who trained the horse, for how long, and for what purpose.",
+      "properties": {
+        "currentTrainer": {
+          "type": "object",
+          "properties": {
+            "trainerDID": { "type": "string", "privacyClass": "shielded" },
+            "trainerName": { "type": "string", "privacyClass": "shielded" },
+            "facility": { "type": "string", "privacyClass": "shielded" },
+            "discipline": { "type": "string", "privacyClass": "shielded" },
+            "since": { "type": "string", "format": "date", "privacyClass": "shielded" },
+            "monthlyRate": { "type": "number", "privacyClass": "restricted" }
+          },
+          "privacyClass": "shielded"
+        },
+        "trainingHistory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "trainerDID": { "type": "string", "privacyClass": "shielded" },
+              "trainerName": { "type": "string", "privacyClass": "shielded" },
+              "discipline": { "type": "string", "privacyClass": "shielded" },
+              "fromDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+              "toDate": { "type": "string", "format": "date", "privacyClass": "shielded" },
+              "notes": { "type": "string", "privacyClass": "shielded" }
+            }
+          },
+          "privacyClass": "shielded"
+        }
+      },
+      "privacyClass": "shielded"
+    }
+  }
+}
