@@ -151,6 +151,142 @@ For horses with tokenized ownership (shares, breeding rights, syndicate interest
 
 ---
 
+## RFID / Microchip Integration — Equine Identity Infrastructure
+
+### The Equine RFID Landscape
+
+Horses have a more regulated and higher-stakes identification infrastructure than companion animals. Many registries, competitions, and international transport regulations **already require** microchipping. EquineProData bridges this existing physical ID layer to a privacy-preserving digital identity.
+
+### Equine Microchip Standards
+
+| Standard | Frequency | Use | Required By |
+|----------|-----------|-----|-------------|
+| **ISO 11784/11785** | 134.2 kHz (FDX-B) | International equine ID | FEI, EU regulation, most registries |
+| **ISO 14223** | 134.2 kHz | Advanced transponders (temp sensors) | Emerging — biosensor chips |
+| **UELN** (Universal Equine Life Number) | — | 15-digit unique ID linked to chip | FEI, EU, many national registries |
+| **EID** (Electronic Identification) | 134.2 kHz | EU livestock regulation (EC 2015/262) | EU mandatory for all equines since 2009 |
+| **ISO 15693 / NFC** | 13.56 MHz | Smart halter tags, NFC-enabled bands | Growing — show/event wearables |
+
+**Key difference from pets**: Equine chips are often **mandated by law or competition rules**, not optional. The infrastructure already exists at scale.
+
+### Equine-Specific RFID Features
+
+**Biosensor chips** (ISO 14223 advanced transponders) are emerging for horses:
+- **Temperature sensing** — Chip reads core body temperature when scanned (critical for colic detection, infection monitoring)
+- **Activity monitoring** — Paired with ingestible or implantable sensors
+- **Competition doping detection** — Biosensor data as tamper-proof health evidence
+
+These biosensor readings can feed directly into EquineProData health records as ZK-verifiable observations.
+
+### How RFID → DID Binding Works for Equines
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  EQUINE RFID → DID BINDING PROTOCOL                      │
+│                                                          │
+│  ENROLLMENT (at vet clinic or registry event)            │
+│  ┌─────────────────────────────────────────────┐         │
+│  │ 1. Vet/registrar scans horse's microchip     │         │
+│  │    → Reads 15-digit ISO chip number          │         │
+│  │    → Cross-references UELN if applicable     │         │
+│  │                                              │         │
+│  │ 2. Chip number + UELN hashed together        │         │
+│  │    → persistentHash("equinepro:rfid:",       │         │
+│  │       chipNum, ueln)                         │         │
+│  │    → Deterministic DID identifier            │         │
+│  │                                              │         │
+│  │ 3. DID registered on Midnight                │         │
+│  │    → Links to current owner's DID (sealed)   │         │
+│  │    → Registry affiliations attached          │         │
+│  │    → Health records attached                  │         │
+│  │    → Lineage/pedigree hash attached          │         │
+│  │                                              │         │
+│  │ 4. Owner/syndicate sets policies             │         │
+│  │    → Emergency disclosure rules              │         │
+│  │    → Competition disclosure rules            │         │
+│  │    → RWA access permissions                  │         │
+│  └─────────────────────────────────────────────┘         │
+│                                                          │
+│  EMERGENCY SCAN (at scene / event / transport)           │
+│  ┌─────────────────────────────────────────────┐         │
+│  │ 1. Vet/responder scans horse's chip          │         │
+│  │    → If biosensor chip: also reads temp      │         │
+│  │                                              │         │
+│  │ 2. Hash computed → maps to equine DID        │         │
+│  │                                              │         │
+│  │ 3. SentinelDID verifies vet/responder creds  │         │
+│  │                                              │         │
+│  │ 4. Emergency health data released            │         │
+│  │    → Medications, allergies, colic history    │         │
+│  │    → Competition drug implications flagged    │         │
+│  │    → Owner/trainer/insurance notified        │         │
+│  └─────────────────────────────────────────────┘         │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Multi-Layer Equine Identification
+
+| Priority | Method | Scan Device | Notes |
+|----------|--------|-------------|-------|
+| 🥇 1 | **RFID microchip** (neck, nuchal ligament) | Universal ISO scanner | Industry standard, mandated in many jurisdictions |
+| 🥈 2 | **NFC smart halter tag** | Smartphone (NFC) | Easy for event staff/handlers — removable but linked to same DID |
+| 🥉 3 | **QR code on halter/bridle plate** | Smartphone camera | Visual backup for any handler |
+| 4 | **Freeze brand / lip tattoo** | Visual / app OCR | Legacy ID methods — can be mapped to DID |
+| 5 | **AI visual identification** | Smartphone camera | Facial recognition, markings, whorl patterns |
+
+**All methods resolve to the same equine DID.** A horse scanned at a competition in Kentucky and then at a vet clinic in California produces the same DID — the identity is persistent and global.
+
+### Registry Interoperability via RFID
+
+The RFID chip is the bridge between legacy registries and EquineProData:
+
+```
+RFID Chip Number
+     │
+     ├── → Jockey Club registration
+     ├── → AQHA registration
+     ├── → USEF competition record
+     ├── → FEI international record
+     ├── → USDA health certificate (Coggins)
+     │
+     └── → EquineProData DID (Midnight)
+              ├── ZK-verified health records
+              ├── Privacy-preserving ownership
+              ├── Emergency disclosure policy
+              ├── RWA tokenization anchor
+              └── Competition drug testing history
+```
+
+EquineProData doesn't replace these registries — it **unifies them under a single privacy-preserving identity** anchored to the physical chip the horse already carries.
+
+### Hardware for Equine RFID
+
+**Professional (vet clinics, event officials)**:
+- Professional ISO scanners with extended read range (~12+ inches for equine neck implants)
+- Bluetooth-enabled → connects to EquineProData mobile app
+- Examples: Datamars GES Compact, Allflex RS420, Destron Fearing GPR+
+- Temperature-reading scanners for biosensor chips
+
+**Event staff / handlers / volunteers**:
+- Handheld ISO scanner (~$50–$150 for basic models)
+- NFC-enabled smartphone for smart halter tags
+- Camera for QR code backup
+
+**In-trailer / barn-mounted**:
+- Panel readers mounted at trailer ramp or stall entrance
+- Auto-scan horses as they enter/exit → automatic check-in/check-out
+- Integrated with Downman transport monitoring
+
+### Privacy Model
+
+- **Chip number hashed, not stored** — same ZK model as PetProData
+- **Registry cross-references are sealed** — the DID links to registries but doesn't expose which registries or registration numbers on-chain
+- **Ownership is sealed** — scanning a horse's chip reveals only what the emergency disclosure policy allows, never owner identity by default
+- **Competition results are selectively disclosable** — prove "this horse has competed at [level]" without revealing full competition history
+- **Breeding/lineage is selectively disclosable** — prove "this horse descends from [sire line]" without revealing the full pedigree (protects proprietary breeding strategies)
+
+---
+
 ## Proposed Smart Contract Architecture
 
 ### Equine Emergency Disclosure Contract
