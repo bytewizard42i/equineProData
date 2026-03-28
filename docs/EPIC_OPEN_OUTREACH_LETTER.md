@@ -1,6 +1,6 @@
 # Open@Epic Outreach Letter
 
-**From**: John Santi
+**From**: John Santi — Midnight NightForce Bravo | Midnight Academy Triple Certified | Cardano Certified Blockchain Associate | Emurgo Certified Blockchain Business Consultant | Midnight Ambassador
 **To**: Open@Epic Team
 **Date**: March 2026
 **Subject**: Safe Health Data — Privacy-Preserving Healthcare Data Framework
