@@ -16,7 +16,7 @@ EquinePro is a premium equine data platform built on the [Midnight](https://midn
 - **Folder-Based Record Architecture** — Health records, breeding, competition, transport, insurance, and compliance data organized into permissioned folders
 - **Emergency Access** — Predefined emergency packets become accessible under cryptographically auditable conditions
 - **RWA Infrastructure** — Ownership shares, breeding rights, stud contracts, lineage provenance, performance-linked valuation, and tokenized economic interests
-- **Potential for fractionalizationa and crowdfunding** 
+- **Potential for fractionalization and crowdfunding**
 
 ---
 
