@@ -117,6 +117,12 @@ EquinePro
 
 ---
 
+## Origin
+
+The concept of using animal health datasets as a precursor to semi-decentralized healthcare data for humans was proposed by [Orito (GoldRush)](https://x.com/TheGoldRush). The insight: establishing trust and legitimacy with animal health records first creates a proven, lower-stakes foundation before applying the same privacy-preserving infrastructure to human healthcare.
+
+---
+
 ## Status
 
 🏗️ **Architecture phase** — Design documents and workflow specifications in progress.
