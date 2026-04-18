@@ -1,0 +1,722 @@
+// ============================================================================
+// EquinePro — equineProData.compact
+// ============================================================================
+//
+// Privacy-preserving equine identity, records, RWA ownership, breeding
+// lineage, and performance tracking on Midnight. Sister product to
+// petProData; superset because horses are simultaneously:
+//   - A living animal (identity, health, emergency access)
+//   - A financial asset (fractional ownership, valuation, RWA)
+//   - An athlete (performance events, discipline-specific records)
+//   - Breeding stock (sire / dam / foaling lineage)
+//
+// WHAT THIS CONTRACT DOES (OVER petProData)
+//   Everything petProData does (registration, ownership, folder access,
+//   emergency packet, research consent), PLUS:
+//     - Fractional ownership SHARES with transfer circuits — enabling
+//       RWA-style syndicate ownership, breeding-rights purchases, and
+//       tokenized share trading without exposing individual owners
+//     - Breeding records (sire/dam lineage linked to other horseIds)
+//     - Performance event logs (commitments to prize purses, placements)
+//     - Appraisal / valuation snapshots (commit to off-chain appraisal)
+//
+// PRIVACY MODEL
+//   PUBLIC  : primaryOwnerKey, discipline class, share count totals,
+//             ownership-share transfers (amounts, NOT identities of holders —
+//             holders are keyed by hash(horseId, holderKey))
+//   PRIVATE : registrationCommit, microchipCommit, emergencyPacket,
+//             researchCohort, valuation appraisal, breeding commit,
+//             performance event commitments
+//   ZK     : consumers can prove "this wallet owns >= N shares" or
+//             "this horse has qualifying lineage" without revealing
+//             the share distribution or lineage specifics
+//
+// RWA USE CASES ENABLED BY THIS CONTRACT
+//   - Race-horse syndicate: 20 investors buy 50 shares each of a 1000-share
+//     horse. `transferShares` moves ownership, `proveMinimumShareHolding`
+//     gates voting rights without revealing other owners.
+//   - Breeding-rights sale: sell 100 shares with the understanding that
+//     shareholders share stud-fee revenue. Revenue distribution happens
+//     off-chain; the contract tracks provable ownership.
+//   - Valuation-backed loan: `proveMinimumShareHolding` + `currentAppraisalCommit`
+//     enable a lender to verify collateral without seeing the full
+//     cap table.
+//   - Competition prize distribution: `recordPerformance` commits to a
+//     prize-money event; off-chain settlement splits per `getShareBalance`.
+//
+// INTEGRATION WITH DIDzMonolith
+//   - Primary owner keys are Midnight wallets, optionally bound to
+//     `did:midnight:...` via DIDz.io.
+//   - Vet practices, farriers, transport companies, and event organizers
+//     are identified by their own wallet keys and are granted folder
+//     access on a per-horse basis.
+//   - Registry bodies (Jockey Club, AQHA, etc.) are trusted issuers on
+//     DIDz.io; their attestations flow through DIDz.io's `attestToDid`
+//     with the horseId as the subject.
+//
+// COMPILER
+//   - compactc v0.30.0, language pragma >= 0.16 && <= 0.21
+//   - Validated on the hosted Compact playground (skipZk mode)
+// ============================================================================
+
+pragma language_version >= 0.16 && <= 0.21;
+
+import CompactStandardLibrary;
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+// Equine-specific record folders. Distinct from petProData — horses have
+// BREEDING, LINEAGE, PERFORMANCE, HOOF_DENTAL, TRANSPORT, REGISTRATION,
+// and OWNERSHIP folders that pets don't typically track.
+export enum EquineFolder {
+  IDENTITY,        // 0  — species, breed, coloring, registration number
+  VACCINES,        // 1  — EEE/WEE/WNV/rabies/flu/rhino compliance
+  CLINICAL,        // 2  — labs, diagnostics, treatment notes
+  BREEDING,        // 3  — breeding soundness exams, stallion reports
+  LINEAGE,         // 4  — pedigree, DNA tests, parentage verification
+  PERFORMANCE,     // 5  — race/show results, prize money, placements
+  HOOF_DENTAL,     // 6  — farrier, trimming, dental floats
+  TRANSPORT,       // 7  — health certificates, Coggins, transport papers
+  INSURANCE,       // 8  — mortality, major medical, loss of use
+  RESEARCH,        // 9  — study participation
+  END_OF_LIFE,     // 10 — euthanasia, disposition
+  REGISTRATION,    // 11 — breed registry papers (Jockey Club, AQHA, etc.)
+  OWNERSHIP        // 12 — sale docs, syndicate agreements, titles
+}
+
+// Primary discipline / use. Fine-grained training history lives off-chain.
+export enum EquineDiscipline {
+  UNSPECIFIED,
+  RACING,
+  DRESSAGE,
+  JUMPING,
+  EVENTING,
+  REINING,
+  WESTERN_PLEASURE,
+  ENDURANCE,
+  POLO,
+  DRIVING,
+  BREEDING,
+  PLEASURE,
+  OTHER
+}
+
+// ============================================================================
+// DATA STRUCTURES
+// ============================================================================
+
+struct HorseRecord {
+  primaryOwnerKey: ZswapCoinPublicKey;
+  discipline: Uint<8>;
+  registrationCommit: Bytes<32>;         // commit to registry papers
+  microchipCommit: Bytes<32>;            // commit to microchip ID
+  emergencyPacketCommit: Bytes<32>;
+  emergencyPacketSet: Boolean;
+  researchConsent: Boolean;
+  researchCohortCommit: Bytes<32>;
+  totalShares: Uint<32>;                 // fixed total, set at registration
+  sharesDistributed: Uint<32>;           // tracks total shares currently outstanding
+  currentAppraisalCommit: Bytes<32>;     // commit to latest appraisal
+  lastAppraisedAt: Uint<64>;
+  registeredAt: Uint<64>;
+  isActive: Boolean;
+}
+
+struct FolderAccess {
+  grantedAt: Uint<64>;
+  expiresAt: Uint<64>;
+  isRevoked: Boolean;
+}
+
+struct EmergencyReleaseLog {
+  responderKey: ZswapCoinPublicKey;
+  releasedAt: Uint<64>;
+}
+
+struct BreedingRecord {
+  sireHorseId: Bytes<32>;
+  damHorseId: Bytes<32>;
+  foalingCommit: Bytes<32>;              // commit to foaling date / notes
+  recordedAt: Uint<64>;
+}
+
+struct PerformanceEventLog {
+  eventCommit: Bytes<32>;                // commit to event details / placement
+  recordedAt: Uint<64>;
+}
+
+// Hash inputs for deterministic key derivation.
+struct HorseIdInput {
+  separator: Bytes<32>;
+  primaryOwnerKey: ZswapCoinPublicKey;
+  registrationCommit: Bytes<32>;
+  registeredAt: Uint<64>;
+}
+
+struct GranteeKeyHashInput {
+  separator: Bytes<32>;
+  granteeKey: ZswapCoinPublicKey;
+}
+
+struct FolderAccessKeyInput {
+  separator: Bytes<32>;
+  horseId: Bytes<32>;
+  folder: Uint<8>;
+  granteeKeyHash: Bytes<32>;
+}
+
+struct ShareBalanceKeyInput {
+  separator: Bytes<32>;
+  horseId: Bytes<32>;
+  holderKeyHash: Bytes<32>;
+}
+
+struct EmergencyLogKeyInput {
+  separator: Bytes<32>;
+  horseId: Bytes<32>;
+  releasedAt: Uint<64>;
+}
+
+struct PerformanceLogKeyInput {
+  separator: Bytes<32>;
+  horseId: Bytes<32>;
+  recordedAt: Uint<64>;
+}
+
+// ============================================================================
+// LEDGER STATE
+// ============================================================================
+
+export ledger horses: Map<Bytes<32>, HorseRecord>;
+export ledger folderAccessGrants: Map<Bytes<32>, FolderAccess>;
+export ledger shareBalances: Map<Bytes<32>, Uint<32>>;
+export ledger breedingRecords: Map<Bytes<32>, BreedingRecord>;
+export ledger performanceLogs: Map<Bytes<32>, PerformanceEventLog>;
+export ledger emergencyReleases: Map<Bytes<32>, EmergencyReleaseLog>;
+
+export ledger totalHorsesRegistered: Counter;
+export ledger totalShareTransfers: Counter;
+export ledger totalBreedingsRecorded: Counter;
+export ledger totalPerformanceEvents: Counter;
+export ledger totalEmergencyReleases: Counter;
+
+sealed ledger deployerKey: ZswapCoinPublicKey;
+
+// ============================================================================
+// CONSTRUCTOR
+// ============================================================================
+
+constructor() { deployerKey = ownPublicKey(); }
+
+// ============================================================================
+// INTERNAL HELPERS
+// ============================================================================
+
+circuit computeHorseId(
+  primaryOwnerKey: ZswapCoinPublicKey,
+  registrationCommit: Bytes<32>,
+  registeredAt: Uint<64>
+): Bytes<32> {
+  return persistentHash<HorseIdInput>(HorseIdInput {
+    separator: pad(32, "equine:horse:v1"),
+    primaryOwnerKey: primaryOwnerKey,
+    registrationCommit: registrationCommit,
+    registeredAt: registeredAt
+  });
+}
+
+// Generic participant-key hasher (used for both grantees and shareholders
+// with distinct domain tags to prevent cross-domain collisions).
+circuit hashParticipantKey(key: ZswapCoinPublicKey, domainTag: Bytes<32>): Bytes<32> {
+  return persistentHash<GranteeKeyHashInput>(GranteeKeyHashInput {
+    separator: domainTag,
+    granteeKey: key
+  });
+}
+
+circuit computeFolderAccessKey(
+  horseId: Bytes<32>,
+  folder: Uint<8>,
+  granteeKey: ZswapCoinPublicKey
+): Bytes<32> {
+  return persistentHash<FolderAccessKeyInput>(FolderAccessKeyInput {
+    separator: pad(32, "equine:access:v1"),
+    horseId: horseId,
+    folder: folder,
+    granteeKeyHash: hashParticipantKey(granteeKey, pad(32, "equine:grantee:v1"))
+  });
+}
+
+circuit computeShareBalanceKey(
+  horseId: Bytes<32>,
+  holderKey: ZswapCoinPublicKey
+): Bytes<32> {
+  return persistentHash<ShareBalanceKeyInput>(ShareBalanceKeyInput {
+    separator: pad(32, "equine:share:v1"),
+    horseId: horseId,
+    holderKeyHash: hashParticipantKey(holderKey, pad(32, "equine:holder:v1"))
+  });
+}
+
+circuit computeEmergencyLogKey(
+  horseId: Bytes<32>,
+  releasedAt: Uint<64>
+): Bytes<32> {
+  return persistentHash<EmergencyLogKeyInput>(EmergencyLogKeyInput {
+    separator: pad(32, "equine:emergency:v1"),
+    horseId: horseId,
+    releasedAt: releasedAt
+  });
+}
+
+circuit computePerformanceLogKey(
+  horseId: Bytes<32>,
+  recordedAt: Uint<64>
+): Bytes<32> {
+  return persistentHash<PerformanceLogKeyInput>(PerformanceLogKeyInput {
+    separator: pad(32, "equine:perf:v1"),
+    horseId: horseId,
+    recordedAt: recordedAt
+  });
+}
+
+circuit subWithFloor32(a: Uint<32>, b: Uint<32>): Uint<32> {
+  if (a <= b) { return 0; }
+  return (a - b) as Uint<32>;
+}
+
+circuit getShareBalanceOrZero(
+  horseId: Bytes<32>,
+  holderKey: ZswapCoinPublicKey
+): Uint<32> {
+  const slot = computeShareBalanceKey(horseId, holderKey);
+  if (!shareBalances.member(disclose(slot))) { return 0; }
+  return shareBalances.lookup(disclose(slot));
+}
+
+// ============================================================================
+// HORSE LIFECYCLE
+// ============================================================================
+
+// Register a new horse. The registering owner receives ALL `totalShares`
+// initially; they can then `transferShares` to syndicate members later.
+export circuit registerHorse(
+  registrationCommit: Bytes<32>,
+  microchipCommit: Bytes<32>,
+  discipline: Uint<8>,
+  totalShares: Uint<32>,
+  currentTime: Uint<64>
+): Bytes<32> {
+  assert(disclose(discipline) <= (12 as Uint<8>), "Discipline out of range");
+  assert(disclose(totalShares) >= (1 as Uint<32>), "Must have at least 1 share");
+
+  const owner = ownPublicKey();
+  const horseId = computeHorseId(owner, registrationCommit, currentTime);
+  assert(!horses.member(disclose(horseId)), "Horse already registered");
+
+  const rec = HorseRecord {
+    primaryOwnerKey: owner,
+    discipline: discipline,
+    registrationCommit: registrationCommit,
+    microchipCommit: microchipCommit,
+    emergencyPacketCommit: pad(32, ""),
+    emergencyPacketSet: false,
+    researchConsent: false,
+    researchCohortCommit: pad(32, ""),
+    totalShares: totalShares,
+    sharesDistributed: totalShares,
+    currentAppraisalCommit: pad(32, ""),
+    lastAppraisedAt: 0,
+    registeredAt: currentTime,
+    isActive: true
+  };
+  horses.insert(disclose(horseId), disclose(rec));
+
+  const ownerSlot = computeShareBalanceKey(horseId, owner);
+  shareBalances.insert(disclose(ownerSlot), disclose(totalShares));
+
+  totalHorsesRegistered.increment(1);
+  return disclose(horseId);
+}
+
+// Transfer the PRIMARY OWNER role (the authority who can grant access,
+// record performance, set valuation, etc.). Does NOT move shares — those
+// move via `transferShares`. A new primary owner starts with zero shares
+// unless they already held some.
+export circuit transferPrimaryOwnership(
+  horseId: Bytes<32>,
+  newOwnerKey: ZswapCoinPublicKey
+): [] {
+  assert(horses.member(disclose(horseId)), "Horse not found");
+  const r = horses.lookup(disclose(horseId));
+  assert(r.isActive, "Horse deactivated");
+  assert(ownPublicKey() == r.primaryOwnerKey, "Only primary owner can transfer");
+
+  const updated = HorseRecord {
+    primaryOwnerKey: newOwnerKey,
+    discipline: r.discipline,
+    registrationCommit: r.registrationCommit,
+    microchipCommit: r.microchipCommit,
+    emergencyPacketCommit: r.emergencyPacketCommit,
+    emergencyPacketSet: r.emergencyPacketSet,
+    researchConsent: r.researchConsent,
+    researchCohortCommit: r.researchCohortCommit,
+    totalShares: r.totalShares,
+    sharesDistributed: r.sharesDistributed,
+    currentAppraisalCommit: r.currentAppraisalCommit,
+    lastAppraisedAt: r.lastAppraisedAt,
+    registeredAt: r.registeredAt,
+    isActive: r.isActive
+  };
+  horses.insert(disclose(horseId), disclose(updated));
+}
+
+// End-of-life or permanent retirement. Historical data persists for audit.
+export circuit deactivateHorse(horseId: Bytes<32>): [] {
+  assert(horses.member(disclose(horseId)), "Horse not found");
+  const r = horses.lookup(disclose(horseId));
+  assert(r.isActive, "Already deactivated");
+  assert(ownPublicKey() == r.primaryOwnerKey, "Only primary owner can deactivate");
+
+  const updated = HorseRecord {
+    primaryOwnerKey: r.primaryOwnerKey,
+    discipline: r.discipline,
+    registrationCommit: r.registrationCommit,
+    microchipCommit: r.microchipCommit,
+    emergencyPacketCommit: r.emergencyPacketCommit,
+    emergencyPacketSet: r.emergencyPacketSet,
+    researchConsent: r.researchConsent,
+    researchCohortCommit: r.researchCohortCommit,
+    totalShares: r.totalShares,
+    sharesDistributed: r.sharesDistributed,
+    currentAppraisalCommit: r.currentAppraisalCommit,
+    lastAppraisedAt: r.lastAppraisedAt,
+    registeredAt: r.registeredAt,
+    isActive: false
+  };
+  horses.insert(disclose(horseId), disclose(updated));
+}
+
+// ============================================================================
+// RWA SHARE OWNERSHIP
+// ============================================================================
+
+// Caller transfers `amount` shares to `toKey`. Caller must hold at least
+// `amount`. This is the primary RWA operation — enables syndicate forming,
+// breeding-rights purchases, and secondary-market trading.
+export circuit transferShares(
+  horseId: Bytes<32>,
+  toKey: ZswapCoinPublicKey,
+  amount: Uint<32>
+): [] {
+  assert(horses.member(disclose(horseId)), "Horse not found");
+  const r = horses.lookup(disclose(horseId));
+  assert(r.isActive, "Horse deactivated");
+  assert(disclose(amount) >= (1 as Uint<32>), "Amount must be >= 1");
+
+  const sender = ownPublicKey();
+  const senderBalance = getShareBalanceOrZero(horseId, sender);
+  assert(disclose(senderBalance) >= disclose(amount), "Insufficient share balance");
+
+  const senderSlot = computeShareBalanceKey(horseId, sender);
+  const newSenderBalance = subWithFloor32(senderBalance, amount);
+  shareBalances.insert(disclose(senderSlot), disclose(newSenderBalance));
+
+  const recipientBalance = getShareBalanceOrZero(horseId, toKey);
+  const recipientSlot = computeShareBalanceKey(horseId, toKey);
+  const newRecipientBalance = (recipientBalance + amount) as Uint<32>;
+  shareBalances.insert(disclose(recipientSlot), disclose(newRecipientBalance));
+
+  totalShareTransfers.increment(1);
+}
+
+export circuit getShareBalance(
+  horseId: Bytes<32>,
+  holderKey: ZswapCoinPublicKey
+): Uint<32> {
+  return getShareBalanceOrZero(horseId, holderKey);
+}
+
+// Consumer-facing ZK-style predicate — prove "I own at least N shares of
+// this horse" without revealing the exact share count (only the boolean
+// is disclosed in the final proof).
+export circuit proveMinimumShareHolding(
+  horseId: Bytes<32>,
+  holderKey: ZswapCoinPublicKey,
+  minShares: Uint<32>
+): Boolean {
+  return getShareBalanceOrZero(horseId, holderKey) >= minShares;
+}
+
+// ============================================================================
+// BREEDING RECORDS (one per horse — parentage is immutable after recording)
+// ============================================================================
+
+export circuit recordBreeding(
+  horseId: Bytes<32>,
+  sireHorseId: Bytes<32>,
+  damHorseId: Bytes<32>,
+  foalingCommit: Bytes<32>,
+  currentTime: Uint<64>
+): [] {
+  assert(horses.member(disclose(horseId)), "Horse not found");
+  const r = horses.lookup(disclose(horseId));
+  assert(r.isActive, "Horse deactivated");
+  assert(ownPublicKey() == r.primaryOwnerKey, "Only primary owner records breeding");
+  assert(!breedingRecords.member(disclose(horseId)), "Breeding record already exists");
+
+  const br = BreedingRecord {
+    sireHorseId: sireHorseId,
+    damHorseId: damHorseId,
+    foalingCommit: foalingCommit,
+    recordedAt: currentTime
+  };
+  breedingRecords.insert(disclose(horseId), disclose(br));
+  totalBreedingsRecorded.increment(1);
+}
+
+export circuit getBreedingRecord(horseId: Bytes<32>): BreedingRecord {
+  assert(breedingRecords.member(disclose(horseId)), "No breeding record");
+  return breedingRecords.lookup(disclose(horseId));
+}
+
+// ============================================================================
+// PERFORMANCE EVENT LOG (multiple events per horse)
+// ============================================================================
+
+// Record a race, show, or competition event. The `eventCommit` is a hash
+// of off-chain event details (placement, prize purse, time, judge scores).
+// Share-holders can audit via off-chain access to the event metadata.
+export circuit recordPerformance(
+  horseId: Bytes<32>,
+  eventCommit: Bytes<32>,
+  currentTime: Uint<64>
+): Bytes<32> {
+  assert(horses.member(disclose(horseId)), "Horse not found");
+  const r = horses.lookup(disclose(horseId));
+  assert(r.isActive, "Horse deactivated");
+  assert(ownPublicKey() == r.primaryOwnerKey, "Only primary owner records performance");
+
+  const slot = computePerformanceLogKey(horseId, currentTime);
+  const log = PerformanceEventLog {
+    eventCommit: eventCommit,
+    recordedAt: currentTime
+  };
+  performanceLogs.insert(disclose(slot), disclose(log));
+  totalPerformanceEvents.increment(1);
+  return disclose(slot);
+}
+
+// ============================================================================
+// VALUATION SNAPSHOT
+// ============================================================================
+
+// Primary owner commits to an appraisal. Used as on-chain anchor for
+// RWA-backed lending and insurance claims. Off-chain appraiser signs the
+// actual valuation; the commit here is their document hash.
+export circuit setValuation(
+  horseId: Bytes<32>,
+  appraisalCommit: Bytes<32>,
+  currentTime: Uint<64>
+): [] {
+  assert(horses.member(disclose(horseId)), "Horse not found");
+  const r = horses.lookup(disclose(horseId));
+  assert(r.isActive, "Horse deactivated");
+  assert(ownPublicKey() == r.primaryOwnerKey, "Only primary owner can set valuation");
+
+  const updated = HorseRecord {
+    primaryOwnerKey: r.primaryOwnerKey,
+    discipline: r.discipline,
+    registrationCommit: r.registrationCommit,
+    microchipCommit: r.microchipCommit,
+    emergencyPacketCommit: r.emergencyPacketCommit,
+    emergencyPacketSet: r.emergencyPacketSet,
+    researchConsent: r.researchConsent,
+    researchCohortCommit: r.researchCohortCommit,
+    totalShares: r.totalShares,
+    sharesDistributed: r.sharesDistributed,
+    currentAppraisalCommit: appraisalCommit,
+    lastAppraisedAt: currentTime,
+    registeredAt: r.registeredAt,
+    isActive: r.isActive
+  };
+  horses.insert(disclose(horseId), disclose(updated));
+}
+
+// ============================================================================
+// FOLDER ACCESS (same pattern as petProData)
+// ============================================================================
+
+export circuit grantFolderAccess(
+  horseId: Bytes<32>,
+  folder: Uint<8>,
+  granteeKey: ZswapCoinPublicKey,
+  expiresAt: Uint<64>,
+  currentTime: Uint<64>
+): Bytes<32> {
+  assert(horses.member(disclose(horseId)), "Horse not found");
+  const r = horses.lookup(disclose(horseId));
+  assert(r.isActive, "Horse deactivated");
+  assert(ownPublicKey() == r.primaryOwnerKey, "Only primary owner can grant access");
+  assert(disclose(folder) <= (12 as Uint<8>), "Invalid folder");
+  assert(disclose(expiresAt) > disclose(currentTime), "Expiration must be future");
+
+  const slot = computeFolderAccessKey(horseId, folder, granteeKey);
+  const grant = FolderAccess {
+    grantedAt: currentTime,
+    expiresAt: expiresAt,
+    isRevoked: false
+  };
+  folderAccessGrants.insert(disclose(slot), disclose(grant));
+  return disclose(slot);
+}
+
+export circuit revokeFolderAccess(
+  horseId: Bytes<32>,
+  folder: Uint<8>,
+  granteeKey: ZswapCoinPublicKey
+): [] {
+  assert(horses.member(disclose(horseId)), "Horse not found");
+  const r = horses.lookup(disclose(horseId));
+  assert(ownPublicKey() == r.primaryOwnerKey, "Only primary owner can revoke access");
+
+  const slot = computeFolderAccessKey(horseId, folder, granteeKey);
+  assert(folderAccessGrants.member(disclose(slot)), "No grant to revoke");
+  const g = folderAccessGrants.lookup(disclose(slot));
+  assert(!g.isRevoked, "Already revoked");
+
+  const updated = FolderAccess {
+    grantedAt: g.grantedAt,
+    expiresAt: g.expiresAt,
+    isRevoked: true
+  };
+  folderAccessGrants.insert(disclose(slot), disclose(updated));
+}
+
+export circuit hasFolderAccess(
+  horseId: Bytes<32>,
+  folder: Uint<8>,
+  granteeKey: ZswapCoinPublicKey,
+  currentTime: Uint<64>
+): Boolean {
+  if (!horses.member(disclose(horseId))) { return false; }
+  const r = horses.lookup(disclose(horseId));
+  if (!r.isActive) { return false; }
+
+  const slot = computeFolderAccessKey(horseId, folder, granteeKey);
+  if (!folderAccessGrants.member(disclose(slot))) { return false; }
+  const g = folderAccessGrants.lookup(disclose(slot));
+  if (g.isRevoked) { return false; }
+  return g.expiresAt >= currentTime;
+}
+
+// ============================================================================
+// EMERGENCY PACKET (same semantics as petProData)
+// ============================================================================
+
+export circuit setEmergencyPacket(
+  horseId: Bytes<32>,
+  packetCommit: Bytes<32>
+): [] {
+  assert(horses.member(disclose(horseId)), "Horse not found");
+  const r = horses.lookup(disclose(horseId));
+  assert(r.isActive, "Horse deactivated");
+  assert(ownPublicKey() == r.primaryOwnerKey, "Only primary owner can set emergency packet");
+
+  const updated = HorseRecord {
+    primaryOwnerKey: r.primaryOwnerKey,
+    discipline: r.discipline,
+    registrationCommit: r.registrationCommit,
+    microchipCommit: r.microchipCommit,
+    emergencyPacketCommit: packetCommit,
+    emergencyPacketSet: true,
+    researchConsent: r.researchConsent,
+    researchCohortCommit: r.researchCohortCommit,
+    totalShares: r.totalShares,
+    sharesDistributed: r.sharesDistributed,
+    currentAppraisalCommit: r.currentAppraisalCommit,
+    lastAppraisedAt: r.lastAppraisedAt,
+    registeredAt: r.registeredAt,
+    isActive: r.isActive
+  };
+  horses.insert(disclose(horseId), disclose(updated));
+}
+
+export circuit logEmergencyAccess(
+  horseId: Bytes<32>,
+  currentTime: Uint<64>
+): Bytes<32> {
+  assert(horses.member(disclose(horseId)), "Horse not found");
+  const r = horses.lookup(disclose(horseId));
+  assert(r.emergencyPacketSet, "No emergency packet configured");
+
+  const responder = ownPublicKey();
+  const logKey = computeEmergencyLogKey(horseId, currentTime);
+  const log = EmergencyReleaseLog {
+    responderKey: responder,
+    releasedAt: currentTime
+  };
+  emergencyReleases.insert(disclose(logKey), disclose(log));
+  totalEmergencyReleases.increment(1);
+  return disclose(logKey);
+}
+
+// ============================================================================
+// RESEARCH CONSENT
+// ============================================================================
+
+export circuit setResearchConsent(
+  horseId: Bytes<32>,
+  cohortCommit: Bytes<32>,
+  optIn: Boolean
+): [] {
+  assert(horses.member(disclose(horseId)), "Horse not found");
+  const r = horses.lookup(disclose(horseId));
+  assert(r.isActive, "Horse deactivated");
+  assert(ownPublicKey() == r.primaryOwnerKey, "Only primary owner can set consent");
+
+  const updated = HorseRecord {
+    primaryOwnerKey: r.primaryOwnerKey,
+    discipline: r.discipline,
+    registrationCommit: r.registrationCommit,
+    microchipCommit: r.microchipCommit,
+    emergencyPacketCommit: r.emergencyPacketCommit,
+    emergencyPacketSet: r.emergencyPacketSet,
+    researchConsent: optIn,
+    researchCohortCommit: cohortCommit,
+    totalShares: r.totalShares,
+    sharesDistributed: r.sharesDistributed,
+    currentAppraisalCommit: r.currentAppraisalCommit,
+    lastAppraisedAt: r.lastAppraisedAt,
+    registeredAt: r.registeredAt,
+    isActive: r.isActive
+  };
+  horses.insert(disclose(horseId), disclose(updated));
+}
+
+export circuit proveResearchEligible(
+  horseId: Bytes<32>,
+  expectedCohortCommit: Bytes<32>
+): Boolean {
+  if (!horses.member(disclose(horseId))) { return false; }
+  const r = horses.lookup(disclose(horseId));
+  if (!r.isActive) { return false; }
+  if (!r.researchConsent) { return false; }
+  return r.researchCohortCommit == expectedCohortCommit;
+}
+
+// ============================================================================
+// READ-ONLY QUERIES
+// ============================================================================
+
+export circuit getHorseRecord(horseId: Bytes<32>): HorseRecord {
+  assert(horses.member(disclose(horseId)), "Horse not found");
+  return horses.lookup(disclose(horseId));
+}
+
+export circuit isHorseActive(horseId: Bytes<32>): Boolean {
+  if (!horses.member(disclose(horseId))) { return false; }
+  return horses.lookup(disclose(horseId)).isActive;
+}
