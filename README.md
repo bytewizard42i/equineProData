@@ -95,13 +95,42 @@ EquinePro
 
 ---
 
+## Three Verticals, One Architecture
+
+EquinePro is the **equine** vertical of a three-vertical family that shares one privacy-preserving health-data architecture, plus a Real World Asset layer the other two verticals do not need:
+
+| Vertical | Repo | Phase | What it does |
+|----------|------|-------|--------------|
+| 🐾 **PetProData** | [petProData](https://github.com/bytewizard42i/petProData) | Phase 0 | Companion animal records (dogs, cats, exotics) |
+| 🐴 **EquinePro** | this repo | Phase 1 | Equine identity + RWA (ownership shares, breeding, lineage) |
+| 🏥 **SafeHealthData** | [safeHealthData](https://github.com/bytewizard42i/safeHealthData_me) | Phase 2+ | Human inpatient + outpatient healthcare |
+
+**Same Compact contracts. Same folder model. Same emergency reveal protocol. Same DIDz identity primitives.** EquinePro is Phase 1 because equine medicine is where multi-party consent is already normalized: a six-figure show jumper has owners, syndicates, trainers, breeders, vets, farriers, transporters, insurers, and event regulators all needing different scoped views into the same horse. Equine teaches the family how to handle 8+ stakeholders per case before SafeHealthData inherits the pattern for hospital rooms with 12+.
+
+**What EquinePro adds and contributes forward**: RWA infrastructure (ownership shares, breeding rights, stud contracts, performance-linked valuation), multi-party consent flows, pre-purchase exam circuits, competition compliance / medication withdrawal proofs, breeding and lineage proofs, transport and interstate compliance (Coggins, USDA APHIS).
+
+**What flows from PetProData into EquinePro**: folder model, permission graph, emergency reveal contracts, vaccine/allergy/medication circuits, owner-portal UX. EquinePro is a pure superset of the Phase 0 architecture.
+
+**What flows from SafeHealthData back to EquinePro**: HIPAA-grade audit trail (becomes a marketing differentiator in equine syndicate disputes), bedside kiosk + RFID + biometric pattern from the [hospital room deep dive](https://github.com/bytewizard42i/safeHealthData_me/blob/main/docs/EVENTREVOLUTION_HOSPITAL_ROOM_DEEP_DIVE.md) (Phase 1 deploys at premium equine hospitals like Rood & Riddle, Hagyard, Wellington Equine), Ai inference consent layer, discharge soulbound NFT for owners and syndicate members, cross-species research via [STARSTREAM_HIPAA_PROOFS](https://github.com/bytewizard42i/safeHealthData_me/blob/main/docs/STARSTREAM_HIPAA_PROOFS.md).
+
+See **[Three Verticals, One Architecture](https://github.com/bytewizard42i/safeHealthData_me/blob/main/docs/CROSS_VERTICAL_INTEGRATION.md)** (canonical reference in the SafeHealthData repo) for what transfers between verticals, identity mapping across species, and operational cross-pollination.
+
+---
+
 ## Related Projects
 
 | Project | Role |
 |---------|------|
-| [SafeHealth Data](https://github.com/bytewizard42i/safeHealthData_me) | Parent platform — human healthcare |
-| [PetProData](https://github.com/bytewizard42i/petProData) | Sister platform — companion animals |
+| [SafeHealthData](https://github.com/bytewizard42i/safeHealthData_me) | Parent platform, human healthcare (Phase 2+) |
+| [PetProData](https://github.com/bytewizard42i/petProData) | Sister platform, companion animals (Phase 0) |
 | [DIDz.io](https://github.com/bytewizard42i/didz-dapp-system) | Identity hub for the ecosystem |
+| [KYCz](https://github.com/bytewizard42i/KYCz_us_app) | Owner / syndicate / vet / regulator verification |
+| [SentinelDID](https://github.com/bytewizard42i/SentinelDID) | Emergency reveal policy contracts |
+| [SilentLedger](https://github.com/bytewizard42i/SilentLedger) | Privacy-preserving financial records for syndicate ownership |
+| [SharedScience](https://github.com/bytewizard42i/sharedScience_me) | Research marketplace (equine + cross-species cohort matching) |
+| [EventRevolution](https://github.com/bytewizard42i/EventRevolution) | Bedside kiosk + RFID hardware reference (premium equine hospital pilot) |
+| [ZKSplunk](https://github.com/bytewizard42i/ZKSplunk_Splunking_w_Midnight) | Equine farm and hospital operations dashboards + Ai diagnostics |
+| [GeoZ](https://github.com/bytewizard42i/GeoZ_us_app_Midnight-Oracle) | Interstate transport and jurisdictional compliance (Coggins, USDA APHIS) |
 | [DIDzMonolith](https://github.com/bytewizard42i/DIDzMonolith) | Monorepo containing all DIDz projects |
 
 ---
