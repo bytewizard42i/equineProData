@@ -4,6 +4,8 @@
 
 Part of the **DIDz ecosystem**.
 
+![Veterinary & Animal Health on Midnight: protecting privacy, proving trust, preserving value](assets/veterinary-animal-health-on-midnight.png)
+
 ---
 
 ## What Is EquinePro?
