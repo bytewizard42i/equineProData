@@ -163,3 +163,13 @@ The concept of using animal health datasets as a precursor to semi-decentralized
 ## License
 
 TBD
+
+## Three-pillar connection
+
+equineProData is a **consumer product** built on the DIDz three-pillar model:
+
+- **DIDz (root identity):** Horse owners hold a DIDz; equineProData verifies ownership without revealing identity.
+- **AgenticDID (agent authority):** Research agents can be delegated scoped grants to access breeding/health records.
+- **RWAz (object identity):** Horses are registered as RWAz objects — ownership is a transferable credential on the RWAz registry.
+
+equineProData uses `equineProData.compact` (19 circuits).
