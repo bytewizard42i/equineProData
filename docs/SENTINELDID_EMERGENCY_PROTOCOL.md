@@ -82,7 +82,7 @@ Horses present unique emergency challenges that make SentinelDID integration esp
 - Equine-specific AI-assisted guidance: "Do NOT approach from behind," "This horse requires [specific handling]"
 - Emergency vet consultation via satellite (Starlink) with health data pushed in advance
 - Each horse identified and tracked even if they've scattered
-- Downman switch on the transport driver triggers the alert chain if the driver is incapacitated
+- LegacyKey switch on the transport driver triggers the alert chain if the driver is incapacitated
 
 ### 4. Colic Emergency — Remote Location
 
@@ -109,7 +109,7 @@ Horses present unique emergency challenges that make SentinelDID integration esp
 
 ---
 
-## Downman Switch for Equine Contexts
+## LegacyKey Switch for Equine Contexts
 
 ### Solo Handler Monitoring
 
@@ -129,7 +129,7 @@ Horses present unique emergency challenges that make SentinelDID integration esp
 
 ### Foaling Watch
 
-- Mare's SentinelDID Downman switch configured for foaling season
+- Mare's SentinelDID LegacyKey switch configured for foaling season
 - Wearable monitors for signs of labor
 - Alert chain: owner → vet → backup vet
 - Foaling complications push mare's full reproductive and health history to responding vet
@@ -275,7 +275,7 @@ EquineProData doesn't replace these registries — it **unifies them under a sin
 **In-trailer / barn-mounted**:
 - Panel readers mounted at trailer ramp or stall entrance
 - Auto-scan horses as they enter/exit → automatic check-in/check-out
-- Integrated with Downman transport monitoring
+- Integrated with LegacyKey transport monitoring
 
 ### Privacy Model
 
@@ -305,10 +305,10 @@ Equine Emergency Disclosure
 └── insurancePreAuth()          — Trigger insurance pre-authorization via ZK health status
 ```
 
-### Equine Downman Switch
+### Equine LegacyKey Switch
 
 ```
-Equine Downman Switch
+Equine LegacyKey Switch
 ├── configureSwitch()           — Handler/transport check-in cadence
 ├── configureFoalingWatch()     — Mare-specific monitoring
 ├── processCheckIn()            — Handler/transport alive signal
